@@ -1,5 +1,6 @@
 # woodpecker-mcp
 
+[![ci](https://github.com/KalvadTech/woodpecker-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/KalvadTech/woodpecker-mcp/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![python](https://img.shields.io/badge/python-3.14%2B-blue.svg)](https://www.python.org/downloads/)
 
@@ -15,8 +16,9 @@ MCP server for [Woodpecker CI](https://woodpecker-ci.org). Stateless — each re
 ## Configuration
 
 | Variable | Required | Default | Description |
-|---|---|---|---|---|
+|---|---|---|---|
 | `WOODPECKER_SERVER` | Yes | — | Your Woodpecker server URL (e.g. `https://ci.example.com`) |
+| `WOODPECKER_TOKEN` | Yes | — | Your Woodpecker personal access token (get it at `{WOODPECKER_SERVER}/user/cli-and-api`) |
 | `MCP_ALLOWED_HOSTS` | No | `localhost` | DNS-rebinding protection allowlist (`*` to disable) |
 
 Authentication is handled per-request via the `Authorization: Bearer <token>` HTTP header.
@@ -27,8 +29,9 @@ Authentication is handled per-request via the `Authorization: Bearer <token>` HT
 # Install dependencies
 make install
 
-# Set your Woodpecker server URL (same env var as the Woodpecker CLI)
+# Set your Woodpecker server URL and token (same env vars as the Woodpecker CLI)
 export WOODPECKER_SERVER=https://ci.example.com
+export WOODPECKER_TOKEN=your-personal-access-token
 
 # Start the server
 make run
@@ -98,6 +101,16 @@ Point your MCP client to the Streamable HTTP endpoint (`http://localhost:8080/mc
 | **Forges** | `list_forges` |
 
 **Total: 34 tools**
+
+## Deployment
+
+```sh
+docker run --rm -p 8080:8080 \
+  -e WOODPECKER_SERVER=https://ci.example.com \
+  ghcr.io/kalvadtech/woodpecker-mcp:latest
+```
+
+The image is multi-stage Alpine, runs as a non-root user, and exposes 8080.
 
 ## Development
 

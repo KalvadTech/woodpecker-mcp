@@ -1,0 +1,7 @@
+.venv/
+tests/
+.git/
+.gitignore
+plan.MD
+*.md
+!README.md
