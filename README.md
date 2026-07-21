@@ -67,8 +67,17 @@ Point your MCP client to the Streamable HTTP endpoint (`http://localhost:8080/mc
 | Category | Tools |
 |---|---|
 | **Repositories** | `search_repositories`, `get_repository`, `list_branches`, `list_pull_requests`, `repair_repository` |
+| **Pipelines** | `list_pipelines`, `get_pipeline`, `trigger_pipeline`, `restart_pipeline`, `cancel_pipeline`, `approve_pipeline`, `get_pipeline_config` |
+| **Logs** | `get_step_logs`, `list_pipeline_steps` |
+| **Cron** | `list_cron_jobs`, `create_cron_job`, `delete_cron_job`, `trigger_cron_job` |
+| **Secrets** | `list_repo_secrets`, `create_repo_secret`, `delete_repo_secret` |
+| **Agents** | `list_agents`, `get_agent`, `list_agent_tasks` |
+| **Organizations** | `list_organizations`, `get_organization`, `get_org_permissions` |
+| **Users** | `list_users`, `get_current_user`, `get_user_feed` |
+| **System** | `get_health`, `get_version`, `get_queue_info` |
+| **Forges** | `list_forges` |
 
-*More tool categories coming soon: pipelines, logs, cron, secrets, agents, organizations, users, system, forges.*
+**Total: 34 tools**
 
 ## Development
 
