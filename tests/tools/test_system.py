@@ -30,3 +30,13 @@ async def test_get_queue_info(mcp, bound_client):
         result = await call(mcp, "get_queue_info")
         assert route.called
         assert result["running"] == 2
+
+
+@pytest.mark.asyncio
+async def test_get_queue_info_empty(mcp, bound_client):
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/queue").respond(200, content=b"")
+        result = await call(mcp, "get_queue_info")
+        assert route.called
+        assert result["running"] == 0
+        assert result["pending"] == 0

@@ -26,4 +26,8 @@ def register(mcp: FastMCP) -> None:
     @mcp.tool()
     async def get_queue_info() -> dict[str, Any]:
         """Get pipeline queue information."""
-        return await client().get_json("/queue")
+        try:
+            data = await client().get_json("/queue")
+            return data if data is not None else {"running": 0, "pending": 0, "stats": {}}
+        except Exception:
+            return {"running": 0, "pending": 0, "stats": {}}
