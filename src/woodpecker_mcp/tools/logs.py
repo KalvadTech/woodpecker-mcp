@@ -52,7 +52,7 @@ def register(mcp: FastMCP) -> None:
         """Get logs for a pipeline step and return them as text with summary statistics."""
         data = await client().get_json(f"/repos/{repo_id}/logs/{pipeline_id}/{step_id}")
         lines = data if isinstance(data, list) else []
-        text = "\n".join(line.get("data", "") for line in lines if isinstance(line, dict))
+        text = "\n".join((line.get("data") or "") for line in lines if isinstance(line, dict))
         error_count = sum(1 for line in lines if "error" in str(line).lower())
         warning_count = sum(1 for line in lines if "warning" in str(line).lower())
         return {
