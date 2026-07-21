@@ -105,3 +105,37 @@ async def test_get_pipeline_config(mcp, bound_client):
         result = await call(mcp, "get_pipeline_config", repo_id=1, pipeline_id=42)
         assert route.called
         assert result["configs"] == fake_config
+
+
+@pytest.mark.asyncio
+async def test_rerun_last_failed(mcp, bound_client):
+    async with respx.mock:
+        list_route = respx.get(
+            f"{BASE_URL}{API_PREFIX}/repos/1/pipelines",
+            params={"page": 1, "perPage": 50},
+        ).respond(
+            200,
+            json=[
+                {"id": 1, "status": "success"},
+                {"id": 2, "status": "failure"},
+            ],
+        )
+        restart_route = respx.post(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/2").respond(
+            200, json={"id": 3, "status": "pending"}
+        )
+        result = await call(mcp, "rerun_last_failed", repo_id=1)
+        assert list_route.called
+        assert restart_route.called
+        assert result["id"] == 3
+
+
+@pytest.mark.asyncio
+async def test_rerun_last_failed_none_found(mcp, bound_client):
+    async with respx.mock:
+        route = respx.get(
+            f"{BASE_URL}{API_PREFIX}/repos/1/pipelines",
+            params={"page": 1, "perPage": 50},
+        ).respond(200, json=[{"id": 1, "status": "success"}])
+        result = await call(mcp, "rerun_last_failed", repo_id=1)
+        assert route.called
+        assert result["message"] == "no failed pipelines found"

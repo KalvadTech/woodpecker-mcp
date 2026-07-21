@@ -42,3 +42,22 @@ def register(mcp: FastMCP) -> None:
                     }
                 )
         return {"steps": steps, "workflows": workflows}
+
+    @mcp.tool()
+    async def summarize_logs(
+        repo_id: int,
+        pipeline_id: int,
+        step_id: int,
+    ) -> dict[str, Any]:
+        """Get logs for a pipeline step and return them as text with summary statistics."""
+        data = await client().get_json(f"/repos/{repo_id}/logs/{pipeline_id}/{step_id}")
+        lines = data if isinstance(data, list) else []
+        text = "\n".join(line.get("data", "") for line in lines if isinstance(line, dict))
+        error_count = sum(1 for line in lines if "error" in str(line).lower())
+        warning_count = sum(1 for line in lines if "warning" in str(line).lower())
+        return {
+            "total_lines": len(lines),
+            "error_lines": error_count,
+            "warning_lines": warning_count,
+            "text": text,
+        }

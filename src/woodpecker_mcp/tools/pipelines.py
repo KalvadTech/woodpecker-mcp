@@ -57,3 +57,12 @@ def register(mcp: FastMCP) -> None:
         """Get configuration files for a pipeline."""
         data = await client().get_json(f"/repos/{repo_id}/pipelines/{pipeline_id}/config")
         return {"configs": data if isinstance(data, list) else []}
+
+    @mcp.tool()
+    async def rerun_last_failed(repo_id: int) -> dict[str, Any]:
+        """Find the last failed pipeline for a repository and restart it."""
+        data = await client().paginate(f"/repos/{repo_id}/pipelines", page=1, per_page=50)
+        for pipeline in data.get("items", []):
+            if pipeline.get("status") in ("failure", "error"):
+                return await client().post_json(f"/repos/{repo_id}/pipelines/{pipeline['id']}")
+        return {"message": "no failed pipelines found"}

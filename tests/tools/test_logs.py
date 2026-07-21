@@ -57,3 +57,20 @@ async def test_list_pipeline_steps(mcp, bound_client):
         assert result["steps"][0]["workflow"] == "build"
         assert result["steps"][0]["name"] == "Build binary"
         assert result["steps"][1]["name"] == "Run tests"
+
+
+@pytest.mark.asyncio
+async def test_summarize_logs(mcp, bound_client):
+    fake_logs = [
+        {"line": 1, "data": "Cloning repository...", "time": 1000},
+        {"line": 2, "data": "Error: build failed", "time": 2000},
+        {"line": 3, "data": "Warning: deprecated API", "time": 3000},
+    ]
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/logs/42/3").respond(200, json=fake_logs)
+        result = await call(mcp, "summarize_logs", repo_id=1, pipeline_id=42, step_id=3)
+        assert route.called
+        assert result["total_lines"] == 3
+        assert result["error_lines"] == 1
+        assert result["warning_lines"] == 1
+        assert "Error: build failed" in result["text"]

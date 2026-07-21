@@ -100,7 +100,7 @@ Point your MCP client to the Streamable HTTP endpoint (`http://localhost:8080/mc
 | **System** | `get_health`, `get_version`, `get_queue_info` |
 | **Forges** | `list_forges` |
 
-**Total: 34 tools**
+**Total: 36 tools**
 
 ## Deployment
 
