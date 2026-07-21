@@ -10,7 +10,6 @@ from . import __version__ as _version
 from .errors import WoodpeckerError
 
 _DEFAULT_TIMEOUT = httpx.Timeout(connect=5.0, read=30.0, write=30.0, pool=5.0)
-_DEFAULT_API_PREFIX = "/api"
 _DEFAULT_PER_PAGE = 50
 _MAX_PER_PAGE = 100
 
@@ -21,12 +20,10 @@ class WoodpeckerClient:
         base_url: str,
         token: str,
         *,
-        api_prefix: str = _DEFAULT_API_PREFIX,
         timeout: httpx.Timeout = _DEFAULT_TIMEOUT,
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         self._base_url = base_url.rstrip("/")
-        self._api_prefix = api_prefix.rstrip("/")
         self._client = httpx.AsyncClient(
             base_url=self._base_url,
             timeout=timeout,
@@ -43,12 +40,8 @@ class WoodpeckerClient:
     def base_url(self) -> str:
         return self._base_url
 
-    @property
-    def api_prefix(self) -> str:
-        return self._api_prefix
-
     def _url(self, path: str) -> str:
-        return f"{self._api_prefix}{path}"
+        return f"/api{path}"
 
     async def __aenter__(self) -> WoodpeckerClient:
         return self

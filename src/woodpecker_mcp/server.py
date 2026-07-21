@@ -10,7 +10,7 @@ from starlette.requests import Request
 from starlette.responses import PlainTextResponse
 from starlette.routing import Route
 
-from .middleware import WoodpeckerAuthMiddleware, load_api_prefix, load_base_url
+from .middleware import WoodpeckerAuthMiddleware, load_base_url
 from .tools import register_all
 
 
@@ -52,14 +52,12 @@ async def _up(request: Request) -> PlainTextResponse:
 
 def build_app(transport: httpx.AsyncBaseTransport | None = None) -> Starlette:
     base_url = load_base_url()
-    api_prefix = load_api_prefix()
     mcp = build_mcp(base_url)
     app: Starlette = mcp.streamable_http_app()
     app.routes.append(Route("/up", _up, methods=["GET"]))
     app.add_middleware(
         WoodpeckerAuthMiddleware,
         base_url=base_url,
-        api_prefix=api_prefix,
         transport=transport,
     )
     return app

@@ -1,5 +1,8 @@
 # woodpecker-mcp
 
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![python](https://img.shields.io/badge/python-3.14%2B-blue.svg)](https://www.python.org/downloads/)
+
 MCP server for [Woodpecker CI](https://woodpecker-ci.org). Stateless — each request carries its own authentication token.
 
 ## Features
@@ -12,9 +15,8 @@ MCP server for [Woodpecker CI](https://woodpecker-ci.org). Stateless — each re
 ## Configuration
 
 | Variable | Required | Default | Description |
-|---|---|---|---|
+|---|---|---|---|---|
 | `WOODPECKER_SERVER` | Yes | — | Your Woodpecker server URL (e.g. `https://ci.example.com`) |
-| `WOODPECKER_API_PREFIX` | No | `/api` | API path prefix under `WOODPECKER_URL` |
 | `MCP_ALLOWED_HOSTS` | No | `localhost` | DNS-rebinding protection allowlist (`*` to disable) |
 
 Authentication is handled per-request via the `Authorization: Bearer <token>` HTTP header.
@@ -35,6 +37,24 @@ make run
 The server listens on `http://127.0.0.1:8080`.
 
 ## Connecting MCP clients
+
+### Claude Code
+
+`.mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "woodpecker": {
+      "type": "http",
+      "url": "http://127.0.0.1:8080/mcp",
+      "headers": {
+        "Authorization": "Bearer your-woodpecker-token"
+      }
+    }
+  }
+}
+```
 
 ### opencode
 
@@ -92,6 +112,15 @@ make check      # Run all checks (lint + format + typecheck + test)
 make clean      # Remove virtual environment
 ```
 
+## Contributing
+
+Pull requests are welcome. Please:
+
+- follow [Conventional Commits](https://www.conventionalcommits.org/),
+- keep changes terse and well-scoped (one logical change per commit),
+- add or update tests for any behaviour change,
+- run `pytest`, `ruff`, and `ty` clean before opening the PR.
+
 ## License
 
-MIT
+[MIT](LICENSE) (c) 2026 Pierre Guillemot.
