@@ -15,4 +15,3 @@ htmlcov/
 .env.*
 !.env.example
 opencode.json
-plan.MD
