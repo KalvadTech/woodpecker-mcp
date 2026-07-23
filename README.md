@@ -18,7 +18,6 @@ MCP server for [Woodpecker CI](https://woodpecker-ci.org). Stateless — each re
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `WOODPECKER_SERVER` | Yes | — | Your Woodpecker server URL (e.g. `https://ci.example.com`) |
-| `WOODPECKER_TOKEN` | Yes | — | Your Woodpecker personal access token (get it at `{WOODPECKER_SERVER}/user/cli-and-api`) |
 | `MCP_ALLOWED_HOSTS` | No | `localhost` | DNS-rebinding protection allowlist (`*` to disable) |
 
 Authentication is handled per-request via the `Authorization: Bearer <token>` HTTP header.
@@ -29,9 +28,8 @@ Authentication is handled per-request via the `Authorization: Bearer <token>` HT
 # Install dependencies
 make install
 
-# Set your Woodpecker server URL and token (same env vars as the Woodpecker CLI)
+# Set your Woodpecker server URL (same env var as the Woodpecker CLI)
 export WOODPECKER_SERVER=https://ci.example.com
-export WOODPECKER_TOKEN=your-personal-access-token
 
 # Start the server
 make run
@@ -52,7 +50,7 @@ The server listens on `http://127.0.0.1:8080`.
       "type": "http",
       "url": "http://127.0.0.1:8080/mcp",
       "headers": {
-        "Authorization": "Bearer your-woodpecker-token"
+        "Authorization": "Bearer {env:WOODPECKER_TOKEN}"
       }
     }
   }
@@ -136,4 +134,4 @@ Pull requests are welcome. Please:
 
 ## License
 
-[MIT](LICENSE) (c) 2026 Pierre Guillemot.
+[MIT](LICENSE) (c) 2026 Kalvad.
