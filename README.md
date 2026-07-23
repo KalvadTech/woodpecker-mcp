@@ -97,8 +97,9 @@ Point your MCP client to the Streamable HTTP endpoint (`http://localhost:8080/mc
 | **Users** | `list_users`, `get_current_user`, `get_user_feed` |
 | **System** | `get_health`, `get_version`, `get_queue_info` |
 | **Forges** | `list_forges` |
+| **URLs** | `open_woodpecker_url` |
 
-**Total: 36 tools**
+**Total: 37 tools**
 
 ## Deployment
 

@@ -10,6 +10,7 @@ from . import (
     repositories,
     secrets,
     system,
+    urls,
     users,
 )
 
@@ -24,4 +25,5 @@ def register_all(mcp: FastMCP) -> None:
     repositories.register(mcp)
     secrets.register(mcp)
     system.register(mcp)
+    urls.register(mcp)
     users.register(mcp)
