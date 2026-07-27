@@ -2,6 +2,7 @@ from mcp.server.fastmcp import FastMCP
 
 from . import (
     agents,
+    analysis,
     cron,
     forges,
     logs,
@@ -17,6 +18,7 @@ from . import (
 
 def register_all(mcp: FastMCP) -> None:
     agents.register(mcp)
+    analysis.register(mcp)
     cron.register(mcp)
     forges.register(mcp)
     logs.register(mcp)

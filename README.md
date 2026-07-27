@@ -11,6 +11,7 @@ MCP server for [Woodpecker CI](https://woodpecker-ci.org). Stateless — each re
 - Query repositories, pipelines, logs, cron jobs, secrets, agents, organizations, users, and system info
 - Trigger, restart, cancel, approve, and decline pipelines
 - Manage cron jobs and repository secrets
+- Diagnose pipeline failures with AI-native `explain_pipeline_failure`
 - Per-request authentication (stateless, horizontally scalable)
 
 ## Configuration
@@ -89,6 +90,7 @@ Point your MCP client to the Streamable HTTP endpoint (`http://localhost:8080/mc
 |---|---|
 | **Repositories** | `search_repositories`, `get_repository`, `list_branches`, `list_pull_requests`, `repair_repository` |
 | **Pipelines** | `list_pipelines`, `get_pipeline`, `trigger_pipeline`, `restart_pipeline`, `cancel_pipeline`, `approve_pipeline`, `get_pipeline_config` |
+| **Analysis** | `explain_pipeline_failure` |
 | **Logs** | `get_step_logs`, `list_pipeline_steps` |
 | **Cron** | `list_cron_jobs`, `create_cron_job`, `delete_cron_job`, `trigger_cron_job` |
 | **Secrets** | `list_repo_secrets`, `create_repo_secret`, `delete_repo_secret` |
@@ -99,7 +101,21 @@ Point your MCP client to the Streamable HTTP endpoint (`http://localhost:8080/mc
 | **Forges** | `list_forges` |
 | **URLs** | `open_woodpecker_url` |
 
-**Total: 37 tools**
+**Total: 38 tools**
+
+## Examples
+
+Questions you can ask your AI assistant when this MCP server is connected:
+
+| Question | Tools used |
+|---|---|
+| "Why did the last pipeline fail?" | `explain_pipeline_failure` |
+| "Is a deployment running right now?" | `get_queue_info` |
+| "What pipelines ran in the last hour?" | `get_user_feed` |
+| "Show me the logs for pipeline #42 in repo X" | `summarize_logs` |
+| "Restart the last failed pipeline in repo Y" | `rerun_last_failed` |
+| "Create a nightly cron job on main" | `create_cron_job` |
+| "List all agents and their tasks" | `list_agents`, `list_agent_tasks` |
 
 ## Deployment
 
