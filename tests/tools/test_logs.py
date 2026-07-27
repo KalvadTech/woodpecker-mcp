@@ -19,6 +19,7 @@ async def test_get_step_logs(mcp, bound_client):
         result = await call(mcp, "get_step_logs", repo_id=1, pipeline_number=42, step_id=3)
         assert route.called
         assert result["logs"] == fake_logs
+        assert result["text"] == "Cloning repository...\nStep completed"
 
 
 @pytest.mark.asyncio

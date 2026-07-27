@@ -256,6 +256,17 @@ async def test_explain_multi_workflow(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_explain_pipeline_not_found(mcp, bound_client):
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/999").respond(404)
+
+        result = await call(mcp, "explain_pipeline_failure", repo_id=1, pipeline_number=999)
+
+        assert route.called
+        assert result["message"] == "Pipeline #999 not found."
+
+
+@pytest.mark.asyncio
 async def test_explain_empty_logs(mcp, bound_client):
     pipeline = _fake_pipeline()
     config = _fake_config()

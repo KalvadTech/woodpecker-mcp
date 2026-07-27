@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import base64
-import contextlib
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from ._common import client
+from ._common import client, decode_log_entries
 
 
 def register(mcp: FastMCP) -> None:
@@ -18,7 +16,9 @@ def register(mcp: FastMCP) -> None:
     ) -> dict[str, Any]:
         """Get logs for a specific pipeline step."""
         data = await client().get_json(f"/repos/{repo_id}/logs/{pipeline_number}/{step_id}")
-        return {"logs": data if isinstance(data, list) else []}
+        lines = data if isinstance(data, list) else []
+        decoded = decode_log_entries(lines)
+        return {"logs": lines, "text": "\n".join(decoded)}
 
     @mcp.tool()
     async def list_pipeline_steps(
@@ -54,15 +54,7 @@ def register(mcp: FastMCP) -> None:
         """Get logs for a pipeline step and return them as text with summary statistics."""
         data = await client().get_json(f"/repos/{repo_id}/logs/{pipeline_number}/{step_id}")
         lines = data if isinstance(data, list) else []
-        decoded: list[str] = []
-        for entry in lines:
-            if isinstance(entry, dict):
-                raw = entry.get("data") or ""
-                with contextlib.suppress(Exception):
-                    raw = base64.b64decode(raw).decode("utf-8", errors="replace")
-                decoded.append(raw)
-            else:
-                decoded.append("")
+        decoded = decode_log_entries(lines)
         text = "\n".join(decoded)
         error_count = sum(1 for line in decoded if "error" in line.lower())
         warning_count = sum(1 for line in decoded if "warning" in line.lower())

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import base64
-import contextlib
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from ._common import client
+from ..errors import WoodpeckerError
+from ._common import client, decode_b64, decode_log_entries
 
 _LOG_TRUNCATION_LIMIT = 200
 
@@ -29,7 +28,13 @@ def register(mcp: FastMCP) -> None:
             if pipeline_number is None:
                 return {"message": "no failed pipelines found in this repository"}
 
-        pipeline = await c.get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}")
+        try:
+            pipeline = await c.get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}")
+        except WoodpeckerError:
+            return {
+                "pipeline": {"number": pipeline_number},
+                "message": f"Pipeline #{pipeline_number} not found.",
+            }
 
         status = pipeline.get("status", "")
         if status not in ("failure", "error"):
@@ -38,7 +43,10 @@ def register(mcp: FastMCP) -> None:
                 "message": f"Pipeline #{pipeline_number} is {status}, not a failure.",
             }
 
-        config_data = await c.get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}/config")
+        try:
+            config_data = await c.get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}/config")
+        except WoodpeckerError:
+            config_data = []
         config_files = config_data if isinstance(config_data, list) else []
 
         workflows_raw = pipeline.get("workflows", [])
@@ -109,16 +117,10 @@ def register(mcp: FastMCP) -> None:
             },
             "workflows": workflows_out,
             "config": [
-                {"name": f.get("name", ""), "data": _decode_b64(f.get("data", ""))}
+                {"name": f.get("name", ""), "data": decode_b64(f.get("data", ""))}
                 for f in config_files
             ],
         }
-
-
-def _decode_b64(text: str) -> str:
-    with contextlib.suppress(Exception):
-        return base64.b64decode(text).decode("utf-8", errors="replace")
-    return text
 
 
 async def _fetch_logs(
@@ -129,16 +131,7 @@ async def _fetch_logs(
 ) -> dict[str, Any]:
     data = await c.get_json(f"/repos/{repo_id}/logs/{pipeline_number}/{step_id}")
     lines = data if isinstance(data, list) else []
-    decoded: list[str] = []
-
-    for entry in lines:
-        if isinstance(entry, dict):
-            raw = entry.get("data") or ""
-            with contextlib.suppress(Exception):
-                raw = base64.b64decode(raw).decode("utf-8", errors="replace")
-            decoded.append(raw)
-        else:
-            decoded.append("")
+    decoded = decode_log_entries(lines)
 
     truncated = len(decoded) > _LOG_TRUNCATION_LIMIT
     if truncated:
