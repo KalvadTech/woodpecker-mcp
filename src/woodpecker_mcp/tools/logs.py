@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import contextlib
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
@@ -11,20 +13,20 @@ def register(mcp: FastMCP) -> None:
     @mcp.tool()
     async def get_step_logs(
         repo_id: int,
-        pipeline_id: int,
+        pipeline_number: int,
         step_id: int,
     ) -> dict[str, Any]:
         """Get logs for a specific pipeline step."""
-        data = await client().get_json(f"/repos/{repo_id}/logs/{pipeline_id}/{step_id}")
+        data = await client().get_json(f"/repos/{repo_id}/logs/{pipeline_number}/{step_id}")
         return {"logs": data if isinstance(data, list) else []}
 
     @mcp.tool()
     async def list_pipeline_steps(
         repo_id: int,
-        pipeline_id: int,
+        pipeline_number: int,
     ) -> dict[str, Any]:
         """List all workflows and steps for a pipeline with their status."""
-        data = await client().get_json(f"/repos/{repo_id}/pipelines/{pipeline_id}")
+        data = await client().get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}")
         workflows = data.get("workflows", []) if isinstance(data, dict) else []
         steps = []
         for wf in workflows:
@@ -46,15 +48,24 @@ def register(mcp: FastMCP) -> None:
     @mcp.tool()
     async def summarize_logs(
         repo_id: int,
-        pipeline_id: int,
+        pipeline_number: int,
         step_id: int,
     ) -> dict[str, Any]:
         """Get logs for a pipeline step and return them as text with summary statistics."""
-        data = await client().get_json(f"/repos/{repo_id}/logs/{pipeline_id}/{step_id}")
+        data = await client().get_json(f"/repos/{repo_id}/logs/{pipeline_number}/{step_id}")
         lines = data if isinstance(data, list) else []
-        text = "\n".join((line.get("data") or "") for line in lines if isinstance(line, dict))
-        error_count = sum(1 for line in lines if "error" in str(line).lower())
-        warning_count = sum(1 for line in lines if "warning" in str(line).lower())
+        decoded: list[str] = []
+        for entry in lines:
+            if isinstance(entry, dict):
+                raw = entry.get("data") or ""
+                with contextlib.suppress(Exception):
+                    raw = base64.b64decode(raw).decode("utf-8", errors="replace")
+                decoded.append(raw)
+            else:
+                decoded.append("")
+        text = "\n".join(decoded)
+        error_count = sum(1 for line in decoded if "error" in line.lower())
+        warning_count = sum(1 for line in decoded if "warning" in line.lower())
         return {
             "total_lines": len(lines),
             "error_lines": error_count,

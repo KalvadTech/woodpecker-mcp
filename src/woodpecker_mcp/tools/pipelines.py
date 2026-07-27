@@ -21,9 +21,9 @@ def register(mcp: FastMCP) -> None:
         )
 
     @mcp.tool()
-    async def get_pipeline(repo_id: int, pipeline_id: int) -> dict[str, Any]:
-        """Get a single pipeline by repo and pipeline id."""
-        return await client().get_json(f"/repos/{repo_id}/pipelines/{pipeline_id}")
+    async def get_pipeline(repo_id: int, pipeline_number: int) -> dict[str, Any]:
+        """Get a single pipeline by repo and pipeline number."""
+        return await client().get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}")
 
     @mcp.tool()
     async def trigger_pipeline(
@@ -38,24 +38,24 @@ def register(mcp: FastMCP) -> None:
         return await client().post_json(f"/repos/{repo_id}/pipelines", json=body)
 
     @mcp.tool()
-    async def restart_pipeline(repo_id: int, pipeline_id: int) -> dict[str, Any]:
+    async def restart_pipeline(repo_id: int, pipeline_number: int) -> dict[str, Any]:
         """Restart a pipeline."""
-        return await client().post_json(f"/repos/{repo_id}/pipelines/{pipeline_id}")
+        return await client().post_json(f"/repos/{repo_id}/pipelines/{pipeline_number}")
 
     @mcp.tool()
-    async def cancel_pipeline(repo_id: int, pipeline_id: int) -> dict[str, Any]:
+    async def cancel_pipeline(repo_id: int, pipeline_number: int) -> dict[str, Any]:
         """Cancel a running pipeline."""
-        return await client().post_json(f"/repos/{repo_id}/pipelines/{pipeline_id}/cancel")
+        return await client().post_json(f"/repos/{repo_id}/pipelines/{pipeline_number}/cancel")
 
     @mcp.tool()
-    async def approve_pipeline(repo_id: int, pipeline_id: int) -> dict[str, Any]:
+    async def approve_pipeline(repo_id: int, pipeline_number: int) -> dict[str, Any]:
         """Approve and start a pending pipeline."""
-        return await client().post_json(f"/repos/{repo_id}/pipelines/{pipeline_id}/approve")
+        return await client().post_json(f"/repos/{repo_id}/pipelines/{pipeline_number}/approve")
 
     @mcp.tool()
-    async def get_pipeline_config(repo_id: int, pipeline_id: int) -> dict[str, Any]:
+    async def get_pipeline_config(repo_id: int, pipeline_number: int) -> dict[str, Any]:
         """Get configuration files for a pipeline."""
-        data = await client().get_json(f"/repos/{repo_id}/pipelines/{pipeline_id}/config")
+        data = await client().get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}/config")
         return {"configs": data if isinstance(data, list) else []}
 
     @mcp.tool()
@@ -64,5 +64,5 @@ def register(mcp: FastMCP) -> None:
         data = await client().paginate(f"/repos/{repo_id}/pipelines", page=1, per_page=50)
         for pipeline in data.get("items", []):
             if pipeline.get("status") in ("failure", "error"):
-                return await client().post_json(f"/repos/{repo_id}/pipelines/{pipeline['id']}")
+                return await client().post_json(f"/repos/{repo_id}/pipelines/{pipeline['number']}")
         return {"message": "no failed pipelines found"}

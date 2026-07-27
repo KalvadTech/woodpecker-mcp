@@ -29,7 +29,7 @@ async def test_get_pipeline(mcp, bound_client):
         route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42").respond(
             200, json=fake_pipeline
         )
-        result = await call(mcp, "get_pipeline", repo_id=1, pipeline_id=42)
+        result = await call(mcp, "get_pipeline", repo_id=1, pipeline_number=42)
         assert route.called
         assert result == fake_pipeline
 
@@ -66,7 +66,7 @@ async def test_restart_pipeline(mcp, bound_client):
         route = respx.post(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42").respond(
             200, json={"id": 5, "status": "pending"}
         )
-        result = await call(mcp, "restart_pipeline", repo_id=1, pipeline_id=42)
+        result = await call(mcp, "restart_pipeline", repo_id=1, pipeline_number=42)
         assert route.called
         assert result["id"] == 5
 
@@ -77,7 +77,7 @@ async def test_cancel_pipeline(mcp, bound_client):
         route = respx.post(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42/cancel").respond(
             200, json={"id": 42, "status": "cancelled"}
         )
-        result = await call(mcp, "cancel_pipeline", repo_id=1, pipeline_id=42)
+        result = await call(mcp, "cancel_pipeline", repo_id=1, pipeline_number=42)
         assert route.called
         assert result["status"] == "cancelled"
 
@@ -88,7 +88,7 @@ async def test_approve_pipeline(mcp, bound_client):
         route = respx.post(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42/approve").respond(
             200, json={"id": 42, "status": "running"}
         )
-        result = await call(mcp, "approve_pipeline", repo_id=1, pipeline_id=42)
+        result = await call(mcp, "approve_pipeline", repo_id=1, pipeline_number=42)
         assert route.called
         assert result["status"] == "running"
 
@@ -102,7 +102,7 @@ async def test_get_pipeline_config(mcp, bound_client):
         route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42/config").respond(
             200, json=fake_config
         )
-        result = await call(mcp, "get_pipeline_config", repo_id=1, pipeline_id=42)
+        result = await call(mcp, "get_pipeline_config", repo_id=1, pipeline_number=42)
         assert route.called
         assert result["configs"] == fake_config
 
@@ -116,8 +116,8 @@ async def test_rerun_last_failed(mcp, bound_client):
         ).respond(
             200,
             json=[
-                {"id": 1, "status": "success"},
-                {"id": 2, "status": "failure"},
+                {"id": 1, "number": 1, "status": "success"},
+                {"id": 2, "number": 2, "status": "failure"},
             ],
         )
         restart_route = respx.post(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/2").respond(

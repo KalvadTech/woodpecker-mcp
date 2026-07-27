@@ -1,3 +1,5 @@
+import base64
+
 import pytest
 import respx
 
@@ -14,7 +16,7 @@ async def test_get_step_logs(mcp, bound_client):
     ]
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/logs/42/3").respond(200, json=fake_logs)
-        result = await call(mcp, "get_step_logs", repo_id=1, pipeline_id=42, step_id=3)
+        result = await call(mcp, "get_step_logs", repo_id=1, pipeline_number=42, step_id=3)
         assert route.called
         assert result["logs"] == fake_logs
 
@@ -51,7 +53,7 @@ async def test_list_pipeline_steps(mcp, bound_client):
         route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42").respond(
             200, json=fake_pipeline
         )
-        result = await call(mcp, "list_pipeline_steps", repo_id=1, pipeline_id=42)
+        result = await call(mcp, "list_pipeline_steps", repo_id=1, pipeline_number=42)
         assert route.called
         assert len(result["steps"]) == 2
         assert result["steps"][0]["workflow"] == "build"
@@ -62,13 +64,13 @@ async def test_list_pipeline_steps(mcp, bound_client):
 @pytest.mark.asyncio
 async def test_summarize_logs(mcp, bound_client):
     fake_logs = [
-        {"line": 1, "data": "Cloning repository...", "time": 1000},
-        {"line": 2, "data": "Error: build failed", "time": 2000},
-        {"line": 3, "data": "Warning: deprecated API", "time": 3000},
+        {"line": 1, "data": base64.b64encode(b"Cloning repository...").decode(), "time": 1000},
+        {"line": 2, "data": base64.b64encode(b"Error: build failed").decode(), "time": 2000},
+        {"line": 3, "data": base64.b64encode(b"Warning: deprecated API").decode(), "time": 3000},
     ]
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/logs/42/3").respond(200, json=fake_logs)
-        result = await call(mcp, "summarize_logs", repo_id=1, pipeline_id=42, step_id=3)
+        result = await call(mcp, "summarize_logs", repo_id=1, pipeline_number=42, step_id=3)
         assert route.called
         assert result["total_lines"] == 3
         assert result["error_lines"] == 1
