@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 
 import httpx
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.applications import Starlette
 from starlette.requests import Request
@@ -14,13 +14,8 @@ from .middleware import WoodpeckerAuthMiddleware, load_base_url
 from .tools import register_all
 
 
-def build_mcp(base_url: str) -> FastMCP:
-    mcp = FastMCP(
-        "woodpecker",
-        stateless_http=True,
-        json_response=True,
-        transport_security=_load_transport_security(),
-    )
+def build_mcp(base_url: str) -> MCPServer:
+    mcp = MCPServer("woodpecker")
     register_all(mcp)
     return mcp
 
@@ -53,7 +48,11 @@ async def _up(request: Request) -> PlainTextResponse:
 def build_app(transport: httpx.AsyncBaseTransport | None = None) -> Starlette:
     base_url = load_base_url()
     mcp = build_mcp(base_url)
-    app: Starlette = mcp.streamable_http_app()
+    app: Starlette = mcp.streamable_http_app(
+        stateless_http=True,
+        json_response=True,
+        transport_security=_load_transport_security(),
+    )
     app.routes.append(Route("/up", _up, methods=["GET"]))
     app.add_middleware(
         WoodpeckerAuthMiddleware,

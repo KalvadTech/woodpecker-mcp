@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import json
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import Any, cast
 
 import pytest
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 from mcp.types import TextContent
 
 from woodpecker_mcp.client import (
@@ -20,8 +20,8 @@ API_TOKEN = "woodpecker-test-token-1234567890abcdef"
 
 
 @pytest.fixture
-def mcp() -> FastMCP:
-    server = FastMCP("woodpecker-test")
+def mcp() -> MCPServer:
+    server = MCPServer("woodpecker-test")
     register_all(server)
     return server
 
@@ -37,21 +37,21 @@ async def bound_client() -> AsyncIterator[WoodpeckerClient]:
         await client.aclose()
 
 
-async def call(mcp: FastMCP, tool_name: str, /, **arguments: Any) -> Any:
+async def call(mcp: MCPServer, tool_name: str, /, **arguments: Any) -> Any:
     result = await mcp.call_tool(tool_name, arguments)
-    if isinstance(result, tuple) and len(result) == 2:
-        _, structured = result
-        if structured is not None:
-            return structured
-        result = result[0]
+    if hasattr(result, "structured_content") and result.structured_content is not None:
+        return result.structured_content
+    if hasattr(result, "content"):
+        content = cast(list[Any], result.content)
+        if not content:
+            return None
+        block = content[0]
+        if isinstance(block, TextContent):
+            try:
+                return json.loads(block.text)
+            except json.JSONDecodeError:
+                return block.text
+        return block
     if isinstance(result, dict):
         return result
-    if not result:
-        return None
-    block = result[0]
-    if isinstance(block, TextContent):
-        try:
-            return json.loads(block.text)
-        except json.JSONDecodeError:
-            return block.text
-    return block
+    return result

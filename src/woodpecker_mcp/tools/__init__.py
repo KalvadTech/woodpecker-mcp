@@ -1,4 +1,4 @@
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from . import (
     agents,
@@ -16,7 +16,7 @@ from . import (
 )
 
 
-def register_all(mcp: FastMCP) -> None:
+def register_all(mcp: MCPServer) -> None:
     agents.register(mcp)
     analysis.register(mcp)
     cron.register(mcp)

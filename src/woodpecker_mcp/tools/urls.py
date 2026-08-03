@@ -4,7 +4,7 @@ import re
 from typing import Any
 from urllib.parse import urlsplit
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from ._common import client
 
@@ -12,7 +12,7 @@ _REPO_PATTERN = re.compile(r"^/repos/(\d+)$")
 _PIPELINE_PATTERN = re.compile(r"^/repos/(\d+)/pipeline/(\d+)$")
 
 
-def register(mcp: FastMCP) -> None:
+def register(mcp: MCPServer) -> None:
     @mcp.tool()
     async def open_woodpecker_url(url: str) -> str:
         """Open a Woodpecker URL and return the entity as Markdown.

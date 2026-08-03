@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from ..errors import WoodpeckerError
 from ._common import client, decode_b64, decode_log_entries
@@ -10,7 +10,7 @@ from ._common import client, decode_b64, decode_log_entries
 _LOG_TRUNCATION_LIMIT = 200
 
 
-def register(mcp: FastMCP) -> None:
+def register(mcp: MCPServer) -> None:
     @mcp.tool()
     async def explain_pipeline_failure(
         repo_id: int,
