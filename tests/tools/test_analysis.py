@@ -285,3 +285,38 @@ async def test_explain_empty_logs(mcp, bound_client):
         assert result["workflows"][0]["steps"][1]["logs"]["total_lines"] == 0
         assert result["workflows"][0]["steps"][1]["logs"]["text"] == ""
         assert result["workflows"][0]["steps"][1]["logs"]["truncated"] is False
+
+
+@pytest.mark.asyncio
+async def test_explain_log_truncation(mcp, bound_client):
+    pipeline = _fake_pipeline()
+    config = _fake_config()
+    # Generate 250 log lines to exceed the 200 line limit
+    log_lines = [f"Log line {i}: some output" for i in range(250)]
+    logs = _fake_logs(log_lines)
+
+    async with respx.mock:
+        pipeline_route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42").respond(
+            200, json=pipeline
+        )
+        respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42/config").respond(200, json=config)
+        logs_route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/logs/42/11").respond(200, json=logs)
+
+        result = await call(mcp, "explain_pipeline_failure", repo_id=1, pipeline_number=42)
+
+        assert pipeline_route.called
+        assert logs_route.called
+
+        step_logs = result["workflows"][0]["steps"][1]["logs"]
+        # Verify total_lines reflects original count
+        assert step_logs["total_lines"] == 250
+        # Verify truncation flag is set
+        assert step_logs["truncated"] is True
+        # Verify text contains only first 200 lines
+        text_lines = step_logs["text"].split("\n")
+        assert len(text_lines) == 200
+        # Verify we have the first line but not lines beyond 200
+        assert "Log line 0" in step_logs["text"]
+        assert "Log line 199" in step_logs["text"]
+        assert "Log line 200" not in step_logs["text"]
+        assert "Log line 249" not in step_logs["text"]
