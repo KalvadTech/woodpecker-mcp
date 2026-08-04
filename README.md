@@ -142,12 +142,7 @@ make clean      # Remove virtual environment
 
 ## Contributing
 
-Pull requests are welcome. Please:
-
-- follow [Conventional Commits](https://www.conventionalcommits.org/),
-- keep changes terse and well-scoped (one logical change per commit),
-- add or update tests for any behaviour change,
-- run `pytest`, `ruff`, and `ty` clean before opening the PR.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on how to contribute, including development setup, code style, testing, and the pull request process.
 
 ## License
 
