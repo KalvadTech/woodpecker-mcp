@@ -15,10 +15,7 @@ def register(mcp: MCPServer) -> None:
         per_page: int = 50,
     ) -> dict[str, Any]:
         """List secrets for a repository."""
-        params: dict[str, Any] = {"page": page, "perPage": per_page}
-        return await client().paginate(
-            f"/repos/{repo_id}/secrets", params=params, page=page, per_page=per_page
-        )
+        return await client().paginate(f"/repos/{repo_id}/secrets", page=page, per_page=per_page)
 
     @mcp.tool()
     async def create_repo_secret(

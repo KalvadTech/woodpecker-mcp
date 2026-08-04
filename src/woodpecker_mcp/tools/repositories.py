@@ -15,9 +15,7 @@ def register(mcp: MCPServer) -> None:
         per_page: int = 50,
     ) -> dict[str, Any]:
         """Search repositories visible to the current user."""
-        params: dict[str, Any] = {"page": page, "perPage": per_page}
-        if query:
-            params["query"] = query
+        params: dict[str, Any] | None = {"query": query} if query else None
         return await client().paginate("/repos", params=params, page=page, per_page=per_page)
 
     @mcp.tool()

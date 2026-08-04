@@ -14,8 +14,7 @@ def register(mcp: MCPServer) -> None:
         per_page: int = 50,
     ) -> dict[str, Any]:
         """List all registered organizations. Requires admin rights."""
-        params: dict[str, Any] = {"page": page, "perPage": per_page}
-        return await client().paginate("/orgs", params=params, page=page, per_page=per_page)
+        return await client().paginate("/orgs", page=page, per_page=per_page)
 
     @mcp.tool()
     async def get_organization(org_id: int) -> dict[str, Any]:

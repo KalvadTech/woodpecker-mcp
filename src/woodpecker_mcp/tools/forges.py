@@ -14,5 +14,4 @@ def register(mcp: MCPServer) -> None:
         per_page: int = 50,
     ) -> dict[str, Any]:
         """List all configured forges."""
-        params: dict[str, Any] = {"page": page, "perPage": per_page}
-        return await client().paginate("/forges", params=params, page=page, per_page=per_page)
+        return await client().paginate("/forges", page=page, per_page=per_page)

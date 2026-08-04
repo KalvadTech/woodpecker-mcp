@@ -15,10 +15,7 @@ def register(mcp: MCPServer) -> None:
         per_page: int = 50,
     ) -> dict[str, Any]:
         """List pipelines of a repository."""
-        params: dict[str, Any] = {"page": page, "perPage": per_page}
-        return await client().paginate(
-            f"/repos/{repo_id}/pipelines", params=params, page=page, per_page=per_page
-        )
+        return await client().paginate(f"/repos/{repo_id}/pipelines", page=page, per_page=per_page)
 
     @mcp.tool()
     async def get_pipeline(repo_id: int, pipeline_number: int) -> dict[str, Any]:
