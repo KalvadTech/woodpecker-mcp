@@ -20,6 +20,16 @@ def register(mcp: MCPServer) -> None:
         Use this when the user pastes a Woodpecker link (e.g.
         https://ci.example.com/repos/11/pipeline/422) and the automatic
         resource template was not used by the client.
+
+        Args:
+            url: A Woodpecker URL pointing to a repository or pipeline.
+                 Supported formats:
+                 - https://ci.example.com/repos/<id>
+                 - https://ci.example.com/repos/<id>/pipeline/<id>
+
+        Returns:
+            Markdown-formatted string with entity details, or an error message
+            if the URL is unsupported or doesn't belong to the configured instance.
         """
         c = client()
         base_url = c.base_url

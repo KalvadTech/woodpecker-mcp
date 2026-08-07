@@ -14,7 +14,24 @@ def register(mcp: MCPServer) -> None:
         pipeline_number: int,
         step_id: int,
     ) -> dict[str, Any]:
-        """Get logs for a specific pipeline step."""
+        """Get logs for a specific pipeline step.
+
+        Fetches the raw log output from a single step in a pipeline workflow.
+
+        Args:
+            repo_id: The internal Woodpecker repository ID.
+            pipeline_number: The pipeline number (e.g. 42).
+            step_id: The step ID (pid) within the pipeline. Use list_pipeline_steps
+                     to discover step IDs.
+
+        Returns:
+            Dict with 'logs' list of log entries and 'text' as a single string
+            with all log lines joined.
+
+        Related tools:
+            - list_pipeline_steps: Discover step IDs for a pipeline.
+            - summarize_logs: Get logs with error/warning counts.
+        """
         data = await client().get_json(f"/repos/{repo_id}/logs/{pipeline_number}/{step_id}")
         lines = data if isinstance(data, list) else []
         decoded = decode_log_entries(lines)
@@ -25,7 +42,23 @@ def register(mcp: MCPServer) -> None:
         repo_id: int,
         pipeline_number: int,
     ) -> dict[str, Any]:
-        """List all workflows and steps for a pipeline with their status."""
+        """List all workflows and steps for a pipeline with their status.
+
+        Use this to discover step IDs (pids) needed by get_step_logs or
+        summarize_logs, and to see the overall pipeline structure.
+
+        Args:
+            repo_id: The internal Woodpecker repository ID.
+            pipeline_number: The pipeline number (e.g. 42).
+
+        Returns:
+            Dict with 'steps' list (each having 'workflow', 'pid', 'name',
+            'state', 'started', 'finished', 'exit_code') and 'workflows' list.
+
+        Related tools:
+            - get_step_logs: Fetch logs for a specific step using its pid.
+            - summarize_logs: Get logs with error/warning counts.
+        """
         data = await client().get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}")
         workflows = data.get("workflows", []) if isinstance(data, dict) else []
         steps = []
@@ -51,7 +84,24 @@ def register(mcp: MCPServer) -> None:
         pipeline_number: int,
         step_id: int,
     ) -> dict[str, Any]:
-        """Get logs for a pipeline step and return them as text with summary statistics."""
+        """Get logs for a pipeline step and return them as text with summary statistics.
+
+        Fetches logs and counts error/warning lines for quick analysis.
+
+        Args:
+            repo_id: The internal Woodpecker repository ID.
+            pipeline_number: The pipeline number (e.g. 42).
+            step_id: The step ID (pid) within the pipeline. Use list_pipeline_steps
+                     to discover step IDs.
+
+        Returns:
+            Dict with 'total_lines', 'error_lines' (count of lines containing 'error'),
+            'warning_lines' (count of lines containing 'warning'), and 'text' (all logs).
+
+        Related tools:
+            - get_step_logs: Get raw logs without statistics.
+            - list_pipeline_steps: Discover step IDs for a pipeline.
+        """
         data = await client().get_json(f"/repos/{repo_id}/logs/{pipeline_number}/{step_id}")
         lines = data if isinstance(data, list) else []
         decoded = decode_log_entries(lines)

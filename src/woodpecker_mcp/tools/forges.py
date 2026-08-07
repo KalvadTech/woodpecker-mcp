@@ -13,5 +13,16 @@ def register(mcp: MCPServer) -> None:
         page: int = 1,
         per_page: int = 50,
     ) -> dict[str, Any]:
-        """List all configured forges."""
+        """List all configured forges.
+
+        Forges are source code management integrations (GitHub, GitLab, Gitea, etc.)
+        that Woodpecker uses to fetch repositories and report pipeline status.
+
+        Args:
+            page: Page number (1-indexed).
+            per_page: Items per page (default 50).
+
+        Returns:
+            Dict with 'items' list of forges, each containing 'id', 'type', 'url', etc.
+        """
         return await client().paginate("/forges", page=page, per_page=per_page)

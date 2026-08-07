@@ -16,7 +16,33 @@ def register(mcp: MCPServer) -> None:
         repo_id: int,
         pipeline_number: int | None = None,
     ) -> dict[str, Any]:
-        """Explain why a pipeline failed. Defaults to the most recent failure."""
+        """Explain why a pipeline failed by gathering logs, config, and metadata.
+
+        Fetches the pipeline details, workflow steps, failed step logs, and
+        pipeline configuration (.woodpecker.yml). If no pipeline_number is
+        given, defaults to the most recent failure in the repository.
+
+        This is the primary diagnostic tool — it aggregates data from multiple
+        endpoints so the LLM can reason about root causes.
+
+        Args:
+            repo_id: The internal Woodpecker repository ID.
+            pipeline_number: Specific pipeline to analyze (e.g. 42). If omitted,
+                             the most recent failed pipeline is used.
+
+        Returns:
+            Dict with:
+            - 'pipeline': metadata (number, status, event, branch, author, commit,
+              duration_seconds, changed_files)
+            - 'workflows': list of workflows with steps (pid, name, state, exit_code,
+              duration_seconds, and truncated logs for failed steps)
+            - 'config': list of decoded .woodpecker.yml configuration files
+
+        Related tools:
+            - get_pipeline: Get just the pipeline metadata without logs.
+            - list_pipeline_steps: List steps without fetching logs.
+            - get_step_logs: Get full logs for a specific step.
+        """
         c = client()
 
         if pipeline_number is None:
