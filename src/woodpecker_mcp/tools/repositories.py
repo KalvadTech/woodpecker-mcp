@@ -27,6 +27,7 @@ def register(mcp: MCPServer) -> None:
         Returns:
             Dict with 'items' list of repos, each containing 'id', 'full_name',
             'active', 'default_branch', 'visibility', etc.
+            Also includes 'has_more' boolean indicating if more pages are available.
 
         Related tools:
             - get_repository: Get full details of a single repo by ID.

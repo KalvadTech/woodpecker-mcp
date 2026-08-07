@@ -24,6 +24,7 @@ def register(mcp: MCPServer) -> None:
         Returns:
             Dict with 'items' list of cron jobs, each containing 'id', 'name',
             'schedule', 'branch', 'created', etc.
+            Also includes 'has_more' boolean indicating if more pages are available.
 
         Related tools:
             - create_cron_job: Add a new cron job.

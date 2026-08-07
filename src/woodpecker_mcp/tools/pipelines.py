@@ -27,6 +27,7 @@ def register(mcp: MCPServer) -> None:
             Dict with 'items' list of pipelines, each containing 'number', 'status',
             'event', 'branch', 'commit', 'author', 'created', etc.
             Pipeline statuses: pending, running, success, failure, error, killed, blocked.
+            Also includes 'has_more' boolean indicating if more pages are available.
 
         Related tools:
             - get_pipeline: Get details of a specific pipeline.

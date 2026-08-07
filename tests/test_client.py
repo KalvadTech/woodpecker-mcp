@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import httpx
 import pytest
 import respx
@@ -15,6 +17,13 @@ API_PREFIX = "/api"
 async def client() -> WoodpeckerClient:
     async with WoodpeckerClient(BASE_URL, "test-token") as c:
         yield c
+
+
+@pytest.fixture
+def no_sleep():
+    """Mock asyncio.sleep to make retry tests instant."""
+    with patch("woodpecker_mcp.client.asyncio.sleep"):
+        yield
 
 
 @pytest.mark.asyncio
@@ -113,7 +122,7 @@ async def test_paginate_empty_response(client: WoodpeckerClient):
 
 
 @pytest.mark.asyncio
-async def test_retry_on_500_error(client: WoodpeckerClient):
+async def test_retry_on_500_error(client: WoodpeckerClient, no_sleep):
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
         route.side_effect = [
@@ -127,7 +136,7 @@ async def test_retry_on_500_error(client: WoodpeckerClient):
 
 
 @pytest.mark.asyncio
-async def test_retry_on_502_error(client: WoodpeckerClient):
+async def test_retry_on_502_error(client: WoodpeckerClient, no_sleep):
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
         route.side_effect = [
@@ -140,7 +149,7 @@ async def test_retry_on_502_error(client: WoodpeckerClient):
 
 
 @pytest.mark.asyncio
-async def test_retry_on_503_error(client: WoodpeckerClient):
+async def test_retry_on_503_error(client: WoodpeckerClient, no_sleep):
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
         route.side_effect = [
@@ -153,7 +162,7 @@ async def test_retry_on_503_error(client: WoodpeckerClient):
 
 
 @pytest.mark.asyncio
-async def test_retry_on_504_error(client: WoodpeckerClient):
+async def test_retry_on_504_error(client: WoodpeckerClient, no_sleep):
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
         route.side_effect = [
@@ -166,7 +175,7 @@ async def test_retry_on_504_error(client: WoodpeckerClient):
 
 
 @pytest.mark.asyncio
-async def test_retry_exhausted_on_500(client: WoodpeckerClient):
+async def test_retry_exhausted_on_500(client: WoodpeckerClient, no_sleep):
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
         route.side_effect = [
@@ -182,7 +191,7 @@ async def test_retry_exhausted_on_500(client: WoodpeckerClient):
 
 
 @pytest.mark.asyncio
-async def test_retry_on_429_with_retry_after(client: WoodpeckerClient):
+async def test_retry_on_429_with_retry_after(client: WoodpeckerClient, no_sleep):
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
         route.side_effect = [
@@ -239,7 +248,7 @@ async def test_no_retry_on_404_error(client: WoodpeckerClient):
 
 
 @pytest.mark.asyncio
-async def test_get_retries_by_default(client: WoodpeckerClient):
+async def test_get_retries_by_default(client: WoodpeckerClient, no_sleep):
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
         route.side_effect = [
@@ -252,7 +261,7 @@ async def test_get_retries_by_default(client: WoodpeckerClient):
 
 
 @pytest.mark.asyncio
-async def test_delete_retries_by_default(client: WoodpeckerClient):
+async def test_delete_retries_by_default(client: WoodpeckerClient, no_sleep):
     async with respx.mock:
         route = respx.delete(f"{BASE_URL}{API_PREFIX}/items/1")
         route.side_effect = [
@@ -275,7 +284,7 @@ async def test_post_does_not_retry_by_default(client: WoodpeckerClient):
 
 
 @pytest.mark.asyncio
-async def test_post_retries_when_enabled(client: WoodpeckerClient):
+async def test_post_retries_when_enabled(client: WoodpeckerClient, no_sleep):
     async with respx.mock:
         route = respx.post(f"{BASE_URL}{API_PREFIX}/items")
         route.side_effect = [
@@ -288,7 +297,7 @@ async def test_post_retries_when_enabled(client: WoodpeckerClient):
 
 
 @pytest.mark.asyncio
-async def test_custom_max_retries():
+async def test_custom_max_retries(no_sleep):
     async with WoodpeckerClient(BASE_URL, "test-token", max_retries=1) as client, respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
         route.side_effect = [
@@ -303,7 +312,7 @@ async def test_custom_max_retries():
 
 
 @pytest.mark.asyncio
-async def test_disable_retries():
+async def test_disable_retries(no_sleep):
     async with WoodpeckerClient(BASE_URL, "test-token", max_retries=0) as client, respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
         route.side_effect = [
@@ -328,7 +337,7 @@ async def test_override_retry_false(client: WoodpeckerClient):
 
 
 @pytest.mark.asyncio
-async def test_retry_on_connect_error(client: WoodpeckerClient):
+async def test_retry_on_connect_error(client: WoodpeckerClient, no_sleep):
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
         route.side_effect = [
@@ -341,7 +350,7 @@ async def test_retry_on_connect_error(client: WoodpeckerClient):
 
 
 @pytest.mark.asyncio
-async def test_retry_on_timeout_error(client: WoodpeckerClient):
+async def test_retry_on_timeout_error(client: WoodpeckerClient, no_sleep):
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
         route.side_effect = [
@@ -354,7 +363,7 @@ async def test_retry_on_timeout_error(client: WoodpeckerClient):
 
 
 @pytest.mark.asyncio
-async def test_retry_exhausted_on_connect_error(client: WoodpeckerClient):
+async def test_retry_exhausted_on_connect_error(client: WoodpeckerClient, no_sleep):
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
         route.side_effect = [httpx.ConnectError("Connection failed")] * 5
@@ -364,7 +373,7 @@ async def test_retry_exhausted_on_connect_error(client: WoodpeckerClient):
 
 
 @pytest.mark.asyncio
-async def test_retry_exhausted_on_timeout_error(client: WoodpeckerClient):
+async def test_retry_exhausted_on_timeout_error(client: WoodpeckerClient, no_sleep):
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
         route.side_effect = [httpx.ReadTimeout("Timeout")] * 5
@@ -410,3 +419,87 @@ async def test_calculate_delay_with_retry_after(client: WoodpeckerClient):
 async def test_calculate_delay_with_invalid_retry_after(client: WoodpeckerClient):
     delay = client._calculate_delay(0, "invalid")
     assert 1.0 <= delay < 2.0
+
+
+@pytest.mark.asyncio
+async def test_paginate_has_more_true(client: WoodpeckerClient):
+    """When items count equals per_page, has_more should be True."""
+    fake_data = [{"id": i} for i in range(50)]  # Exactly 50 items
+    async with respx.mock:
+        respx.get(f"{BASE_URL}{API_PREFIX}/items").respond(200, json=fake_data)
+        result = await client.paginate("/items", per_page=50)
+
+        assert result["items"] == fake_data
+        assert result["has_more"] is True
+
+
+@pytest.mark.asyncio
+async def test_paginate_has_more_false(client: WoodpeckerClient):
+    """When items count is less than per_page, has_more should be False."""
+    fake_data = [{"id": 1}, {"id": 2}]  # Only 2 items
+    async with respx.mock:
+        respx.get(f"{BASE_URL}{API_PREFIX}/items").respond(200, json=fake_data)
+        result = await client.paginate("/items", per_page=50)
+
+        assert result["items"] == fake_data
+        assert result["has_more"] is False
+
+
+@pytest.mark.asyncio
+async def test_paginate_has_more_empty(client: WoodpeckerClient):
+    """When items list is empty, has_more should be False."""
+    async with respx.mock:
+        respx.get(f"{BASE_URL}{API_PREFIX}/items").respond(200, json=[])
+        result = await client.paginate("/items", per_page=50)
+
+        assert result["items"] == []
+        assert result["has_more"] is False
+
+
+@pytest.mark.asyncio
+async def test_iter_all_single_page(client: WoodpeckerClient):
+    """iter_all should yield all items from a single page."""
+    fake_data = [{"id": 1}, {"id": 2}, {"id": 3}]
+    async with respx.mock:
+        respx.get(f"{BASE_URL}{API_PREFIX}/items").respond(200, json=fake_data)
+        items = []
+        async for item in client.iter_all("/items", page_size=50):
+            items.append(item)
+
+        assert items == fake_data
+
+
+@pytest.mark.asyncio
+async def test_iter_all_multiple_pages(client: WoodpeckerClient):
+    """iter_all should fetch all pages and yield all items."""
+    page1 = [{"id": i} for i in range(2)]  # 2 items (full page)
+    page2 = [{"id": i} for i in range(2, 4)]  # 2 items (full page)
+    page3 = [{"id": 4}]  # 1 item (partial page, last page)
+
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
+        route.side_effect = [
+            httpx.Response(200, json=page1),
+            httpx.Response(200, json=page2),
+            httpx.Response(200, json=page3),
+        ]
+
+        items = []
+        async for item in client.iter_all("/items", page_size=2):
+            items.append(item)
+
+        assert len(items) == 5
+        assert items == page1 + page2 + page3
+        assert route.call_count == 3
+
+
+@pytest.mark.asyncio
+async def test_iter_all_empty(client: WoodpeckerClient):
+    """iter_all should yield nothing when first page is empty."""
+    async with respx.mock:
+        respx.get(f"{BASE_URL}{API_PREFIX}/items").respond(200, json=[])
+        items = []
+        async for item in client.iter_all("/items", page_size=50):
+            items.append(item)
+
+        assert items == []

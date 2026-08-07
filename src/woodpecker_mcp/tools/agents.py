@@ -24,6 +24,7 @@ def register(mcp: MCPServer) -> None:
         Returns:
             Dict with 'items' list of agents, each containing 'id', 'name',
             'status' (idle, busy, offline), 'platform', 'backend', etc.
+            Also includes 'has_more' boolean indicating if more pages are available.
 
         Related tools:
             - get_agent: Get details of a specific agent.

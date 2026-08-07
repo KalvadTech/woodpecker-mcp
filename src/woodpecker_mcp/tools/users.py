@@ -21,6 +21,7 @@ def register(mcp: MCPServer) -> None:
 
         Returns:
             Dict with 'items' list of users, each containing 'id', 'login', 'email', 'admin', etc.
+            Also includes 'has_more' boolean indicating if more pages are available.
 
         Related tools:
             - get_current_user: Get the currently authenticated user.
@@ -55,6 +56,7 @@ def register(mcp: MCPServer) -> None:
         Returns:
             Dict with 'items' list of pipelines, each containing 'repo_id', 'number',
             'status', 'event', 'branch', 'commit', 'author', etc.
+            Also includes 'has_more' boolean indicating if more pages are available.
 
         Related tools:
             - get_current_user: Get user details.

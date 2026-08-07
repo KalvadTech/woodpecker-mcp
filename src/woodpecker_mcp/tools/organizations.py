@@ -23,6 +23,7 @@ def register(mcp: MCPServer) -> None:
 
         Returns:
             Dict with 'items' list of organizations, each containing 'id', 'name', etc.
+            Also includes 'has_more' boolean indicating if more pages are available.
 
         Related tools:
             - get_organization: Get details of a specific organization.

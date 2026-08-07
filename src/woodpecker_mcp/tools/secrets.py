@@ -25,6 +25,7 @@ def register(mcp: MCPServer) -> None:
 
         Returns:
             Dict with 'items' list of secrets, each containing 'name' (values are not returned).
+            Also includes 'has_more' boolean indicating if more pages are available.
 
         Related tools:
             - create_repo_secret: Add a new secret.

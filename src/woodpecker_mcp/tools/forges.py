@@ -24,5 +24,6 @@ def register(mcp: MCPServer) -> None:
 
         Returns:
             Dict with 'items' list of forges, each containing 'id', 'type', 'url', etc.
+            Also includes 'has_more' boolean indicating if more pages are available.
         """
         return await client().paginate("/forges", page=page, per_page=per_page)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
+from collections.abc import AsyncIterator
 from contextvars import ContextVar, Token
 from types import TracebackType
 from typing import Any
@@ -273,21 +274,46 @@ class WoodpeckerClient:
         page: int = 1,
         per_page: int = _DEFAULT_PER_PAGE,
     ) -> dict[str, Any]:
+        """Single-page fetch returning {items, page, per_page, has_more}.
+
+        Woodpecker paginates with page/perPage. We expose one page at a time
+        so callers (the LLM) can decide whether to keep going.
+        """
         merged = dict(params or {})
         merged["page"] = page
         merged["perPage"] = min(per_page, _MAX_PER_PAGE)
         data = await self.get_json(path, params=merged)
-        if isinstance(data, list):
-            return {
-                "items": data,
-                "page": page,
-                "per_page": merged["perPage"],
-            }
         return {
             "items": data,
             "page": page,
             "per_page": merged["perPage"],
+            "has_more": len(data) == merged["perPage"] if isinstance(data, list) else False,
         }
+
+    async def iter_all(
+        self,
+        path: str,
+        params: dict[str, Any] | None = None,
+        page_size: int = _MAX_PER_PAGE,
+    ) -> AsyncIterator[dict[str, Any]]:
+        """Iterate every item across all pages.
+
+        Used internally where a tool truly needs the full set (e.g. finding
+        all failed pipelines). Yields items one at a time.
+        """
+        page = 1
+        while True:
+            result = await self.paginate(path, params=params, page=page, per_page=page_size)
+            items = result["items"]
+            if isinstance(items, list):
+                for item in items:
+                    yield item
+                if not result["has_more"]:
+                    return
+            else:
+                yield items
+                return
+            page += 1
 
     async def _json(
         self,
