@@ -3,7 +3,9 @@ from __future__ import annotations
 from typing import Any
 
 from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 
+from ..errors import WoodpeckerError
 from ._common import client
 
 
@@ -51,7 +53,10 @@ def register(mcp: MCPServer) -> None:
             - search_repositories: Find repositories by name.
             - list_branches: List branches for this repository.
         """
-        return await client().get_json(f"/repos/{repo_id}")
+        try:
+            return await client().get_json(f"/repos/{repo_id}")
+        except WoodpeckerError as e:
+            raise ToolError(e.message) from e
 
     @mcp.tool()
     async def list_branches(repo_id: int) -> dict[str, Any]:
