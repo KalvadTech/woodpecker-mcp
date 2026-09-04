@@ -108,3 +108,44 @@ def register(mcp: MCPServer) -> None:
             - get_repository: Check repository status before/after repair.
         """
         return await client().post_json(f"/repos/{repo_id}/repair")
+
+    @mcp.tool()
+    async def activate_repository(forge_remote_id: str) -> dict[str, Any]:
+        """Activate a repository for the currently authenticated user.
+
+        Enables Woodpecker integration for a repository that exists at the forge
+        but is not yet active in Woodpecker.
+
+        Args:
+            forge_remote_id: The repository's unique identifier at the forge
+                             (e.g. the GitHub repo ID).
+
+        Returns:
+            The activated repository object with 'id', 'full_name', 'active',
+            'default_branch', etc.
+
+        Related tools:
+            - search_repositories: Find repositories to activate.
+            - deactivate_repository: Remove a repository from Woodpecker.
+        """
+        return await client().post_json("/repos", params={"forge_remote_id": forge_remote_id})
+
+    @mcp.tool()
+    async def deactivate_repository(repo_id: int) -> dict[str, Any]:
+        """Deactivate a repository, removing it from Woodpecker.
+
+        Deletes the repository and its configuration from the Woodpecker server.
+        Use this when a repository should no longer be built.
+
+        Args:
+            repo_id: The internal Woodpecker repository ID.
+
+        Returns:
+            Dict with 'deleted': True on success.
+
+        Related tools:
+            - search_repositories: Find repository IDs.
+            - activate_repository: Re-activate a repository later.
+        """
+        await client().delete(f"/repos/{repo_id}")
+        return {"deleted": True}

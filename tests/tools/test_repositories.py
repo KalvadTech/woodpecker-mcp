@@ -92,6 +92,28 @@ async def test_repair_repository(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_activate_repository(mcp, bound_client):
+    fake_repo = {"id": 1, "full_name": "testuser/repo-one", "active": True}
+    async with respx.mock:
+        route = respx.post(
+            f"{BASE_URL}{API_PREFIX}/repos",
+            params={"forge_remote_id": "123456"},
+        ).respond(200, json=fake_repo)
+        result = await call(mcp, "activate_repository", forge_remote_id="123456")
+        assert route.called
+        assert result == fake_repo
+
+
+@pytest.mark.asyncio
+async def test_deactivate_repository(mcp, bound_client):
+    async with respx.mock:
+        route = respx.delete(f"{BASE_URL}{API_PREFIX}/repos/1").respond(200, json={})
+        result = await call(mcp, "deactivate_repository", repo_id=1)
+        assert route.called
+        assert result == {"deleted": True}
+
+
+@pytest.mark.asyncio
 async def test_get_repository_not_found(mcp, bound_client):
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/999").respond(404)

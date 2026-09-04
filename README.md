@@ -88,7 +88,7 @@ Point your MCP client to the Streamable HTTP endpoint (`http://localhost:8080/mc
 
 | Category | Tools |
 |---|---|
-| **Repositories** | `search_repositories`, `get_repository`, `list_branches`, `list_pull_requests`, `repair_repository` |
+| **Repositories** | `search_repositories`, `get_repository`, `list_branches`, `list_pull_requests`, `repair_repository`, `activate_repository`, `deactivate_repository` |
 | **Pipelines** | `list_pipelines`, `get_pipeline`, `trigger_pipeline`, `restart_pipeline`, `cancel_pipeline`, `approve_pipeline`, `get_pipeline_config` |
 | **Analysis** | `explain_pipeline_failure` |
 | **Logs** | `get_step_logs`, `list_pipeline_steps` |
@@ -101,7 +101,7 @@ Point your MCP client to the Streamable HTTP endpoint (`http://localhost:8080/mc
 | **Forges** | `list_forges` |
 | **URLs** | `open_woodpecker_url` |
 
-**Total: 38 tools**
+**Total: 40 tools**
 
 ## Examples
 
