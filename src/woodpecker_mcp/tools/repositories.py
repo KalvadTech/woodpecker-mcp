@@ -59,6 +59,26 @@ def register(mcp: MCPServer) -> None:
             raise ToolError(e.message) from e
 
     @mcp.tool()
+    async def get_repository_by_name(repo_full_name: str) -> dict[str, Any]:
+        """Look up a repository by its full name/slug.
+
+        Args:
+            repo_full_name: The repository full name / slug (e.g. 'owner/repo').
+
+        Returns:
+            Repository object with 'id', 'full_name', 'forge_url', 'active',
+            'default_branch', 'visibility', 'timeout', etc.
+
+        Related tools:
+            - search_repositories: Find repositories by name.
+            - get_repository: Get a repository by internal ID.
+        """
+        try:
+            return await client().get_json(f"/repos/lookup/{repo_full_name}")
+        except WoodpeckerError as e:
+            raise ToolError(e.message) from e
+
+    @mcp.tool()
     async def list_branches(repo_id: int) -> dict[str, Any]:
         """List branches of a repository.
 

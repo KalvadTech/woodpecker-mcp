@@ -92,6 +92,27 @@ async def test_repair_repository(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_get_repository_by_name(mcp, bound_client):
+    fake_repo = {"id": 1, "full_name": "testuser/repo-one", "active": True}
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/lookup/testuser/repo-one").respond(
+            200, json=fake_repo
+        )
+        result = await call(mcp, "get_repository_by_name", repo_full_name="testuser/repo-one")
+        assert route.called
+        assert result == fake_repo
+
+
+@pytest.mark.asyncio
+async def test_get_repository_by_name_not_found(mcp, bound_client):
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/lookup/nope/missing").respond(404)
+        with pytest.raises(Exception, match="not found"):
+            await call(mcp, "get_repository_by_name", repo_full_name="nope/missing")
+        assert route.called
+
+
+@pytest.mark.asyncio
 async def test_activate_repository(mcp, bound_client):
     fake_repo = {"id": 1, "full_name": "testuser/repo-one", "active": True}
     async with respx.mock:
