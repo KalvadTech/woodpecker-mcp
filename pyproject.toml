@@ -33,7 +33,7 @@ dependencies = [
     "mcp[cli]==2.2.0",
     "httpx==0.28.1",
     "starlette==1.6.0",
-    "uvicorn[standard]==0.52.4",
+    "uvicorn[standard]==0.53.0",
 ]
 
 [project.urls]
@@ -56,8 +56,8 @@ dev = [
     "pytest==9.1.1",
     "pytest-asyncio==1.4.0",
     "respx==0.23.1",
-    "ruff==0.16.7",
-    "ty==0.0.80",
+    "ruff==0.16.8",
+    "ty==0.0.82",
 ]
 
 [tool.ruff]
