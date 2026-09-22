@@ -13,6 +13,7 @@ from woodpecker_mcp.client import (
     reset_current_client,
     set_current_client,
 )
+from woodpecker_mcp.resources import register_resources
 from woodpecker_mcp.tools import register_all
 
 BASE_URL = "https://woodpecker.test"
@@ -23,6 +24,7 @@ API_TOKEN = "woodpecker-test-token-1234567890abcdef"
 def mcp() -> MCPServer:
     server = MCPServer("woodpecker-test")
     register_all(server)
+    register_resources(server)
     return server
 
 

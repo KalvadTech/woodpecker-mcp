@@ -11,12 +11,14 @@ from starlette.responses import PlainTextResponse
 from starlette.routing import Route
 
 from .middleware import WoodpeckerAuthMiddleware, load_base_url
+from .resources import register_resources
 from .tools import register_all
 
 
 def build_mcp(base_url: str) -> MCPServer:
     mcp = MCPServer("woodpecker")
     register_all(mcp)
+    register_resources(mcp)
     return mcp
 
 
