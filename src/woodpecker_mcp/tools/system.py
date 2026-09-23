@@ -39,6 +39,25 @@ def register(mcp: MCPServer) -> None:
         return await client().get_json("/version")
 
     @mcp.tool()
+    async def list_queued_pipelines() -> dict[str, Any]:
+        """List pipelines currently in the queue.
+
+        Returns the feed of pipelines waiting to be executed or running
+        across all repositories.
+
+        Returns:
+            Dict with 'items' list of queued pipeline entries, each containing
+            'repo_id', 'full_name', 'number', 'status', 'event', 'branch',
+            'commit', 'author', 'created', etc.
+
+        Related tools:
+            - get_queue_info: Get queue statistics (running/pending counts).
+            - list_pipelines: List pipelines for a specific repository.
+        """
+        data = await client().get_json("/pipelines")
+        return {"items": data if isinstance(data, list) else []}
+
+    @mcp.tool()
     async def get_queue_info() -> dict[str, Any]:
         """Get pipeline queue information.
 

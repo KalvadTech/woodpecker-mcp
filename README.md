@@ -89,19 +89,19 @@ Point your MCP client to the Streamable HTTP endpoint (`http://localhost:8080/mc
 | Category | Tools |
 |---|---|
 | **Repositories** | `search_repositories`, `get_repository`, `get_repository_by_name`, `list_branches`, `list_pull_requests`, `repair_repository`, `activate_repository`, `deactivate_repository` |
-| **Pipelines** | `list_pipelines`, `get_pipeline`, `trigger_pipeline`, `restart_pipeline`, `cancel_pipeline`, `approve_pipeline`, `get_pipeline_config` |
+| **Pipelines** | `list_pipelines`, `get_pipeline`, `trigger_pipeline`, `restart_pipeline`, `cancel_pipeline`, `approve_pipeline`, `get_pipeline_config`, `rerun_last_failed` |
 | **Analysis** | `explain_pipeline_failure` |
-| **Logs** | `get_step_logs`, `list_pipeline_steps` |
+| **Logs** | `get_step_logs`, `list_pipeline_steps`, `summarize_logs` |
 | **Cron** | `list_cron_jobs`, `create_cron_job`, `delete_cron_job`, `trigger_cron_job` |
 | **Secrets** | `list_repo_secrets`, `create_repo_secret`, `delete_repo_secret` |
 | **Agents** | `list_agents`, `get_agent`, `list_agent_tasks` |
 | **Organizations** | `list_organizations`, `get_organization`, `get_org_permissions` |
 | **Users** | `list_users`, `get_current_user`, `get_user_feed` |
-| **System** | `get_health`, `get_version`, `get_queue_info` |
+| **System** | `get_health`, `get_version`, `get_queue_info`, `list_queued_pipelines` |
 | **Forges** | `list_forges` |
 | **URLs** | `open_woodpecker_url` |
 
-**Total: 41 tools**
+**Total: 42 tools**
 
 ## Resources
 

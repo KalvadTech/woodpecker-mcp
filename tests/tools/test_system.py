@@ -20,6 +20,40 @@ async def test_get_version(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_list_queued_pipelines(mcp, bound_client):
+    fake_feed = [
+        {
+            "repo_id": 11,
+            "full_name": "KalvadTech/GSR-Backend",
+            "number": 791,
+            "status": "pending",
+            "branch": "main",
+            "commit": "abc123",
+            "author": "dev",
+            "created": 1790000000,
+        },
+        {
+            "repo_id": 4,
+            "full_name": "KalvadTech/Jinn",
+            "number": 467,
+            "status": "running",
+            "branch": "staging",
+            "commit": "def456",
+            "author": "dev",
+            "created": 1790000100,
+        },
+    ]
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/pipelines").respond(
+            200,
+            json=fake_feed,
+        )
+        result = await call(mcp, "list_queued_pipelines")
+        assert route.called
+        assert result["items"] == fake_feed
+
+
+@pytest.mark.asyncio
 async def test_get_queue_info(mcp, bound_client):
     fake_queue = {"running": 2, "pending": 5, "stats": {}}
     async with respx.mock:
