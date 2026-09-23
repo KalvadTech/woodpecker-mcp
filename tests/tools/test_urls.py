@@ -13,23 +13,23 @@ async def test_open_pipeline_url(mcp, bound_client):
         "status": "success",
         "branch": "main",
         "event": "pull_request",
-        "author": "59-29",
-        "commit": "7a0d315ea70b3945ba6ecbd6d6e1b29a367f704b",
-        "message": "UAE Pass",
-        "title": "UAE Pass",
+        "author": "testuser",
+        "commit": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+        "message": "Update landing page",
+        "title": "Update landing page",
         "workflows": [
             {"name": "django_test", "state": "success", "started": 100, "finished": 366},
             {"name": "ruff", "state": "success", "started": 100, "finished": 138},
         ],
     }
     async with respx.mock:
-        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/11/pipelines/422").respond(
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/422").respond(
             200, json=fake_pipeline
         )
         raw = await call(
             mcp,
             "open_woodpecker_url",
-            url=f"{BASE_URL}/repos/11/pipeline/422",
+            url=f"{BASE_URL}/repos/1/pipeline/422",
         )
         result = raw["result"] if isinstance(raw, dict) else raw
         assert route.called
@@ -42,26 +42,26 @@ async def test_open_pipeline_url(mcp, bound_client):
 @pytest.mark.asyncio
 async def test_open_repo_url(mcp, bound_client):
     fake_repo = {
-        "full_name": "KalvadTech/GSR-Backend",
-        "forge_url": "https://github.com/KalvadTech/GSR-Backend",
+        "full_name": "testuser/repo-one",
+        "forge_url": "https://github.com/testuser/repo-one",
         "default_branch": "main",
         "visibility": "private",
         "active": True,
         "timeout": 60,
     }
     async with respx.mock:
-        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/11").respond(
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1").respond(
             200,
             json=fake_repo,
         )
         raw = await call(
             mcp,
             "open_woodpecker_url",
-            url=f"{BASE_URL}/repos/11",
+            url=f"{BASE_URL}/repos/1",
         )
         result = raw["result"] if isinstance(raw, dict) else raw
         assert route.called
-        assert "KalvadTech/GSR-Backend" in result
+        assert "testuser/repo-one" in result
         assert "private" in result
 
 

@@ -23,8 +23,8 @@ async def test_get_version(mcp, bound_client):
 async def test_list_queued_pipelines(mcp, bound_client):
     fake_feed = [
         {
-            "repo_id": 11,
-            "full_name": "KalvadTech/GSR-Backend",
+            "repo_id": 1,
+            "full_name": "testuser/repo-one",
             "number": 791,
             "status": "pending",
             "branch": "main",
@@ -33,8 +33,8 @@ async def test_list_queued_pipelines(mcp, bound_client):
             "created": 1790000000,
         },
         {
-            "repo_id": 4,
-            "full_name": "KalvadTech/Jinn",
+            "repo_id": 2,
+            "full_name": "testuser/repo-two",
             "number": 467,
             "status": "running",
             "branch": "staging",
