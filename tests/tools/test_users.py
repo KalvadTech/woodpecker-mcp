@@ -36,6 +36,37 @@ async def test_get_current_user(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_get_user_repos(mcp, bound_client):
+    fake_repos = [
+        {"id": 1, "full_name": "testuser/repo-one", "active": True, "last_pipeline": None},
+        {"id": 2, "full_name": "testuser/repo-two", "active": True, "last_pipeline": None},
+    ]
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/user/repos").respond(
+            200,
+            json=fake_repos,
+        )
+        result = await call(mcp, "get_user_repos")
+        assert route.called
+        assert result["repos"] == fake_repos
+
+
+@pytest.mark.asyncio
+async def test_get_user_repos_with_filters(mcp, bound_client):
+    fake_repos = [
+        {"id": 1, "full_name": "testuser/repo-one", "active": True, "last_pipeline": None},
+    ]
+    async with respx.mock:
+        route = respx.get(
+            f"{BASE_URL}{API_PREFIX}/user/repos",
+            params={"all": True, "name": "repo"},
+        ).respond(200, json=fake_repos)
+        result = await call(mcp, "get_user_repos", include_inactive=True, name="repo")
+        assert route.called
+        assert result["repos"] == fake_repos
+
+
+@pytest.mark.asyncio
 async def test_get_user_feed(mcp, bound_client):
     fake_feed = [
         {"id": 42, "status": "success", "repo_id": 1},

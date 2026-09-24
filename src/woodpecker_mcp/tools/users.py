@@ -41,6 +41,37 @@ def register(mcp: MCPServer) -> None:
         return await client().get_json("/user")
 
     @mcp.tool()
+    async def get_user_repos(
+        include_inactive: bool = False,
+        name: str | None = None,
+    ) -> dict[str, Any]:
+        """Get the repositories the currently authenticated user has access to.
+
+        Returns a list of repositories visible to the current user, each including
+        its last pipeline.
+
+        Args:
+            include_inactive: Include inactive repositories as well.
+                              Defaults to False (active only).
+            name: Optional filter to match repositories by name.
+
+        Returns:
+            Dict with 'repos' list, each containing repository fields plus
+            'last_pipeline' (the most recent pipeline for that repo).
+
+        Related tools:
+            - get_current_user: Get the current user's details.
+            - search_repositories: Find repositories by query.
+        """
+        params: dict[str, Any] = {}
+        if include_inactive:
+            params["all"] = True
+        if name:
+            params["name"] = name
+        data = await client().get_json("/user/repos", params=params or None)
+        return {"repos": data if isinstance(data, list) else []}
+
+    @mcp.tool()
     async def get_user_feed(
         page: int = 1,
         per_page: int = 50,

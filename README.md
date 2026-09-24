@@ -96,12 +96,12 @@ Point your MCP client to the Streamable HTTP endpoint (`http://localhost:8080/mc
 | **Secrets** | `list_repo_secrets`, `create_repo_secret`, `delete_repo_secret` |
 | **Agents** | `list_agents`, `get_agent`, `list_agent_tasks` |
 | **Organizations** | `list_organizations`, `get_organization`, `get_org_permissions` |
-| **Users** | `list_users`, `get_current_user`, `get_user_feed` |
+| **Users** | `list_users`, `get_current_user`, `get_user_feed`, `get_user_repos` |
 | **System** | `get_health`, `get_version`, `get_queue_info`, `list_queued_pipelines` |
 | **Forges** | `list_forges` |
 | **URLs** | `open_woodpecker_url` |
 
-**Total: 42 tools**
+**Total: 43 tools**
 
 ## Resources
 
