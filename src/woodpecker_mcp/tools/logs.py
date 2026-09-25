@@ -38,6 +38,36 @@ def register(mcp: MCPServer) -> None:
         return {"logs": lines, "text": "\n".join(decoded)}
 
     @mcp.tool()
+    async def download_step_logs(
+        repo_id: int,
+        pipeline_number: int,
+        step_id: int,
+    ) -> dict[str, Any]:
+        """Download the raw log output for a pipeline step.
+
+        Fetches the full plain-text log for a step, unlike get_step_logs which
+        returns structured JSON log entries.
+
+        Args:
+            repo_id: The internal Woodpecker repository ID.
+            pipeline_number: The pipeline number (e.g. 42).
+            step_id: The step ID (pid) within the pipeline. Use list_pipeline_steps
+                     to discover step IDs.
+
+        Returns:
+            Dict with 'text' containing the raw log output.
+
+        Related tools:
+            - list_pipeline_steps: Discover step IDs for a pipeline.
+            - get_step_logs: Get structured log entries instead.
+            - summarize_logs: Get logs with error/warning counts.
+        """
+        text = await client().get_text(
+            f"/repos/{repo_id}/logs/{pipeline_number}/{step_id}/download"
+        )
+        return {"text": text}
+
+    @mcp.tool()
     async def list_pipeline_steps(
         repo_id: int,
         pipeline_number: int,

@@ -23,6 +23,18 @@ async def test_get_step_logs(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_download_step_logs(mcp, bound_client):
+    fake_text = "line1\nline2\nline3"
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/logs/42/7/download").respond(
+            200, text=fake_text
+        )
+        result = await call(mcp, "download_step_logs", repo_id=1, pipeline_number=42, step_id=7)
+        assert route.called
+        assert result["text"] == fake_text
+
+
+@pytest.mark.asyncio
 async def test_list_pipeline_steps(mcp, bound_client):
     fake_pipeline = {
         "id": 42,
