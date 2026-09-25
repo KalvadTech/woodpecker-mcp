@@ -108,6 +108,25 @@ async def test_get_pipeline_config(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_get_pipeline_metadata(mcp, bound_client):
+    fake_metadata = {
+        "id": "pipeline/1/42",
+        "sys": {"version": "3.17.0", "host": "woodpecker.test"},
+        "repo": {"full_name": "testuser/repo-one"},
+        "curr": {"number": 42, "status": "success"},
+        "prev": {"number": 41, "status": "failure"},
+        "forge": {"type": "github"},
+    }
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42/metadata").respond(
+            200, json=fake_metadata
+        )
+        result = await call(mcp, "get_pipeline_metadata", repo_id=1, pipeline_number=42)
+        assert route.called
+        assert result == fake_metadata
+
+
+@pytest.mark.asyncio
 async def test_rerun_last_failed(mcp, bound_client):
     async with respx.mock:
         list_route = respx.get(

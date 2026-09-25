@@ -165,6 +165,27 @@ def register(mcp: MCPServer) -> None:
         return {"configs": data if isinstance(data, list) else []}
 
     @mcp.tool()
+    async def get_pipeline_metadata(repo_id: int, pipeline_number: int) -> dict[str, Any]:
+        """Get the CI metadata for a pipeline.
+
+        Returns the environment metadata available to the pipeline's steps,
+        including current and previous pipeline info, repo, forge, and system details.
+
+        Args:
+            repo_id: The internal Woodpecker repository ID.
+            pipeline_number: The pipeline number (e.g. 42).
+
+        Returns:
+            Dict with 'id', 'curr' (current pipeline), 'prev' (previous pipeline),
+            'repo', 'forge', 'sys', 'workflow', 'step', etc.
+
+        Related tools:
+            - get_pipeline: Get pipeline status and workflow details.
+            - get_pipeline_config: Get the configuration files for this pipeline.
+        """
+        return await client().get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}/metadata")
+
+    @mcp.tool()
     async def rerun_last_failed(repo_id: int) -> dict[str, Any]:
         """Find the last failed pipeline for a repository and restart it.
 
