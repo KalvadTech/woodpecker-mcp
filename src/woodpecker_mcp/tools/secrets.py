@@ -61,6 +61,23 @@ def register(mcp: MCPServer) -> None:
         return await client().post_json(f"/repos/{repo_id}/secrets", json=body)
 
     @mcp.tool()
+    async def get_repo_secret(repo_id: int, secret_name: str) -> dict[str, Any]:
+        """Get a single repository secret by its name.
+
+        Args:
+            repo_id: The internal Woodpecker repository ID.
+            secret_name: The name of the secret (e.g. 'MY_SECRET').
+
+        Returns:
+            The secret object with 'name' and metadata (the value is not returned).
+
+        Related tools:
+            - list_repo_secrets: See all secrets for the repository.
+            - create_repo_secret: Add a new secret.
+        """
+        return await client().get_json(f"/repos/{repo_id}/secrets/{secret_name}")
+
+    @mcp.tool()
     async def delete_repo_secret(repo_id: int, secret_name: str) -> dict[str, Any]:
         """Delete a secret from a repository.
 

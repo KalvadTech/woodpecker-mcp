@@ -37,6 +37,19 @@ async def test_create_repo_secret(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_get_repo_secret(mcp, bound_client):
+    fake_secret = {"id": 1, "name": "MY_SECRET", "events": ["push", "pull_request"]}
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/secrets/MY_SECRET").respond(
+            200,
+            json=fake_secret,
+        )
+        result = await call(mcp, "get_repo_secret", repo_id=1, secret_name="MY_SECRET")
+        assert route.called
+        assert result == fake_secret
+
+
+@pytest.mark.asyncio
 async def test_delete_repo_secret(mcp, bound_client):
     async with respx.mock:
         route = respx.delete(f"{BASE_URL}{API_PREFIX}/repos/1/secrets/MY_SECRET").respond(204)
