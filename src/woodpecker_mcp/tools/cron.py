@@ -65,6 +65,23 @@ def register(mcp: MCPServer) -> None:
         return await client().post_json(f"/repos/{repo_id}/cron", json=body)
 
     @mcp.tool()
+    async def get_cron_job(repo_id: int, cron_id: int) -> dict[str, Any]:
+        """Get a single cron job by its id.
+
+        Args:
+            repo_id: The internal Woodpecker repository ID.
+            cron_id: The cron job ID.
+
+        Returns:
+            The cron job object with 'id', 'name', 'schedule', 'branch', 'created', etc.
+
+        Related tools:
+            - list_cron_jobs: Find cron job IDs.
+            - create_cron_job: Add a new cron job.
+        """
+        return await client().get_json(f"/repos/{repo_id}/cron/{cron_id}")
+
+    @mcp.tool()
     async def delete_cron_job(repo_id: int, cron_id: int) -> dict[str, Any]:
         """Delete a cron job from a repository.
 

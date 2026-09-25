@@ -22,6 +22,19 @@ async def test_list_cron_jobs(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_get_cron_job(mcp, bound_client):
+    fake_cron = {"id": 5, "name": "nightly", "schedule": "0 0 * * *", "branch": "main"}
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/cron/5").respond(
+            200,
+            json=fake_cron,
+        )
+        result = await call(mcp, "get_cron_job", repo_id=1, cron_id=5)
+        assert route.called
+        assert result == fake_cron
+
+
+@pytest.mark.asyncio
 async def test_create_cron_job(mcp, bound_client):
     async with respx.mock:
         route = respx.post(
