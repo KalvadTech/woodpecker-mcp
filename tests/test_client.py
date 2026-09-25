@@ -261,6 +261,28 @@ async def test_get_retries_by_default(client: WoodpeckerClient, no_sleep):
 
 
 @pytest.mark.asyncio
+async def test_get_text(client: WoodpeckerClient):
+    fake_text = "-----BEGIN PUBLIC KEY-----\nMIIB\n-----END PUBLIC KEY-----"
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/signature/public-key").respond(
+            200,
+            text=fake_text,
+        )
+        result = await client.get_text("/signature/public-key")
+        assert route.called
+        assert result == fake_text
+
+
+@pytest.mark.asyncio
+async def test_get_text_raises_on_error(client: WoodpeckerClient):
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/signature/public-key").respond(404)
+        with pytest.raises(WoodpeckerError, match="not found"):
+            await client.get_text("/signature/public-key")
+        assert route.called
+
+
+@pytest.mark.asyncio
 async def test_delete_retries_by_default(client: WoodpeckerClient, no_sleep):
     async with respx.mock:
         route = respx.delete(f"{BASE_URL}{API_PREFIX}/items/1")

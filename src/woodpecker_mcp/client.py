@@ -221,6 +221,33 @@ class WoodpeckerClient:
         """
         return await self._json("GET", path, params=params, retry=retry)
 
+    async def get_text(
+        self,
+        path: str,
+        params: dict[str, Any] | None = None,
+        retry: bool | None = None,
+    ) -> str:
+        """Execute GET request and return raw text content.
+
+        For non-JSON endpoints (e.g. public keys, log downloads).
+
+        Args:
+            path: API path (without /api prefix)
+            params: Query parameters
+            retry: Override default retry behavior (default: True for GET)
+
+        Returns:
+            Raw response text
+        """
+        resp = await self._request_with_retry(
+            "GET",
+            path,
+            retry=retry,
+            params=params,
+        )
+        _raise_for_status(resp)
+        return resp.text
+
     async def post_json(
         self,
         path: str,

@@ -54,6 +54,21 @@ async def test_list_queued_pipelines(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_get_signature_public_key(mcp, bound_client):
+    fake_key = (
+        "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A\n-----END PUBLIC KEY-----"
+    )
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/signature/public-key").respond(
+            200,
+            text=fake_key,
+        )
+        result = await call(mcp, "get_signature_public_key")
+        assert route.called
+        assert result["public_key"] == fake_key
+
+
+@pytest.mark.asyncio
 async def test_get_queue_info(mcp, bound_client):
     fake_queue = {"running": 2, "pending": 5, "stats": {}}
     async with respx.mock:

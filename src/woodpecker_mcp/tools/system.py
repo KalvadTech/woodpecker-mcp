@@ -58,6 +58,22 @@ def register(mcp: MCPServer) -> None:
         return {"items": data if isinstance(data, list) else []}
 
     @mcp.tool()
+    async def get_signature_public_key() -> dict[str, Any]:
+        """Get the server's signature public key.
+
+        Returns the public key the Woodpecker server uses to sign pipeline
+        configurations and secrets.
+
+        Returns:
+            Dict with 'public_key' containing the PEM-encoded public key.
+
+        Related tools:
+            - get_version: Get server version information.
+        """
+        text = await client().get_text("/signature/public-key")
+        return {"public_key": text}
+
+    @mcp.tool()
     async def get_queue_info() -> dict[str, Any]:
         """Get pipeline queue information.
 
