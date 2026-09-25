@@ -130,6 +130,23 @@ def register(mcp: MCPServer) -> None:
         return await client().post_json(f"/repos/{repo_id}/repair")
 
     @mcp.tool()
+    async def get_repo_permissions(repo_id: int) -> dict[str, Any]:
+        """Check the current authenticated user's access to a repository.
+
+        Args:
+            repo_id: The internal Woodpecker repository ID.
+
+        Returns:
+            Dict with permission flags 'admin', 'push', 'pull' indicating the
+            current user's access level for this repository.
+
+        Related tools:
+            - get_repository: Get repository metadata.
+            - get_org_permissions: Check your permissions for an organization.
+        """
+        return await client().get_json(f"/repos/{repo_id}/permissions")
+
+    @mcp.tool()
     async def activate_repository(forge_remote_id: str) -> dict[str, Any]:
         """Activate a repository for the currently authenticated user.
 

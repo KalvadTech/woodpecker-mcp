@@ -113,6 +113,19 @@ async def test_get_repository_by_name_not_found(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_get_repo_permissions(mcp, bound_client):
+    fake_perms = {"admin": True, "push": True, "pull": True, "synced": 1000}
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/permissions").respond(
+            200,
+            json=fake_perms,
+        )
+        result = await call(mcp, "get_repo_permissions", repo_id=1)
+        assert route.called
+        assert result == fake_perms
+
+
+@pytest.mark.asyncio
 async def test_activate_repository(mcp, bound_client):
     fake_repo = {"id": 1, "full_name": "testuser/repo-one", "active": True}
     async with respx.mock:
