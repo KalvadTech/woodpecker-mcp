@@ -3,8 +3,13 @@
 [![ci](https://github.com/KalvadTech/woodpecker-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/KalvadTech/woodpecker-mcp/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![python](https://img.shields.io/badge/python-3.14%2B-blue.svg)](https://www.python.org/downloads/)
+[![docs](https://img.shields.io/badge/docs-github_pages-blue)](https://kalvadtech.github.io/woodpecker-mcp/)
 
 MCP server for [Woodpecker CI](https://woodpecker-ci.org). Stateless — each request carries its own authentication token.
+
+## Documentation
+
+Full documentation lives on [GitHub Pages](https://kalvadtech.github.io/woodpecker-mcp/) — setup, configuration, a complete usage guide, resources, and troubleshooting.
 
 ## Features
 
