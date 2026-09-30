@@ -256,6 +256,71 @@ async def test_explain_multi_workflow(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_review_pipeline_config_with_findings(mcp, bound_client):
+    config_yaml = """
+steps:
+  - name: build
+    image: node:latest
+    when:
+      event: pushh
+"""
+    config = [{"name": ".woodpecker.yml", "data": _encode(config_yaml)}]
+
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42/config").respond(
+            200, json=config
+        )
+
+        result = await call(mcp, "review_pipeline_config", repo_id=1, pipeline_number=42)
+
+        assert route.called
+        assert result["summary"] == {"files": 1, "errors": 1, "warnings": 1}
+        findings = result["config_files"][0]["findings"]
+        rules = {f["rule"] for f in findings}
+        assert "invalid-when-event" in rules
+        assert "unpinned-image" in rules
+
+
+@pytest.mark.asyncio
+async def test_review_pipeline_config_clean(mcp, bound_client):
+    config_yaml = """
+steps:
+  - name: build
+    image: node:24.19.0
+    when:
+      event: push
+"""
+    config = [{"name": ".woodpecker.yml", "data": _encode(config_yaml)}]
+
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42/config").respond(
+            200, json=config
+        )
+
+        result = await call(mcp, "review_pipeline_config", repo_id=1, pipeline_number=42)
+
+        assert route.called
+        assert result["summary"] == {"files": 1, "errors": 0, "warnings": 0}
+        assert result["config_files"][0]["findings"] == []
+
+
+@pytest.mark.asyncio
+async def test_review_pipeline_config_parse_error(mcp, bound_client):
+    config = [{"name": ".woodpecker.yml", "data": _encode("steps:\n  - name: [broken")}]
+
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42/config").respond(
+            200, json=config
+        )
+
+        result = await call(mcp, "review_pipeline_config", repo_id=1, pipeline_number=42)
+
+        assert route.called
+        assert result["summary"] == {"files": 1, "errors": 1, "warnings": 0}
+        assert result["config_files"][0]["findings"][0]["rule"] == "yaml-parse-error"
+
+
+@pytest.mark.asyncio
 async def test_explain_pipeline_not_found(mcp, bound_client):
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/999").respond(404)

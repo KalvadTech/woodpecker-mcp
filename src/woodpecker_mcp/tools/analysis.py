@@ -6,6 +6,7 @@ from mcp.server.mcpserver import MCPServer
 
 from ..errors import WoodpeckerError
 from ._common import client, decode_b64, decode_log_entries
+from ._config_lint import lint_config
 
 _LOG_TRUNCATION_LIMIT = 200
 
@@ -95,6 +96,41 @@ def register(mcp: MCPServer) -> None:
                 {"name": f.get("name", ""), "data": decode_b64(f.get("data", ""))}
                 for f in config_files
             ],
+        }
+
+    @mcp.tool()
+    async def review_pipeline_config(repo_id: int, pipeline_number: int) -> dict[str, Any]:
+        """Lint the .woodpecker config files used by a pipeline.
+
+        Runs deterministic, schema-aware checks: YAML validity, valid
+        when.event values, when blocks missing an event filter, unpinned image
+        tags, deprecated keys (secrets list, step group, platform), unknown
+        keys, and undeclared secret references in commands.
+
+        Args:
+            repo_id: The internal Woodpecker repository ID.
+            pipeline_number: The pipeline number (e.g. 42).
+
+        Returns:
+            Dict with 'config_files' (each with 'name' and a 'findings' list of
+            {rule, severity, location, message}) and 'summary'
+            ({files, errors, warnings}).
+
+        Related tools:
+            - get_pipeline_config: Raw config files for a pipeline.
+            - explain_pipeline_failure: Diagnose a failing pipeline.
+        """
+        c = client()
+        data = await c.get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}/config")
+        raw_files = data if isinstance(data, list) else []
+        config_files = [
+            lint_config(f.get("name", ""), decode_b64(f.get("data", ""))) for f in raw_files
+        ]
+        errors = sum(1 for cf in config_files for f in cf["findings"] if f["severity"] == "error")
+        warnings = sum(1 for cf in config_files for f in cf["findings"] if f["severity"] == "warn")
+        return {
+            "config_files": config_files,
+            "summary": {"files": len(config_files), "errors": errors, "warnings": warnings},
         }
 
 
