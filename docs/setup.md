@@ -18,11 +18,11 @@ make install
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `WOODPECKER_SERVER` | Yes | — | Your Woodpecker server URL (e.g. `https://ci.example.com`) |
+| `WOODPECKER_SERVER` | Yes | - | Your Woodpecker server URL (e.g. `https://ci.example.com`) |
 | `MCP_ALLOWED_HOSTS` | No | `localhost` | DNS-rebinding protection allowlist (`*` to disable) |
 
 Authentication is handled per-request via the `Authorization: Bearer <token>`
-HTTP header. The server is stateless — it stores nothing and does not keep the
+HTTP header. The server is stateless - it stores nothing and does not keep the
 token between requests.
 
 ## Quick start

@@ -4,6 +4,11 @@ Once the server is running, point an MCP client at the Streamable HTTP
 endpoint and send your Woodpecker personal access token as
 `Authorization: Bearer <token>` with each request.
 
+!!! tip "Start with the AI-powered guides"
+    The most useful workflows are [diagnosing failures](../guides/diagnose-failures.md),
+    [reviewing CI configs](../guides/review-ci-config.md), and
+    [monitoring pipelines](../guides/monitor-pipelines.md).
+
 ## Available tools
 
 | Category | Tools |
@@ -32,6 +37,7 @@ Questions you can ask your AI assistant when this MCP server is connected:
 | "Why did the last pipeline fail?" | `explain_pipeline_failure` |
 | "Review the CI config for a pipeline before a release" | `review_pipeline_config` |
 | "Is a deployment running right now?" | `get_queue_info` |
+| "What's queued across all repos right now?" | `list_queued_pipelines` |
 | "What pipelines ran in the last hour?" | `get_user_feed` |
 | "Show me the logs for pipeline #42 in repo X" | `summarize_logs` |
 | "Restart the last failed pipeline in repo Y" | `rerun_last_failed` |

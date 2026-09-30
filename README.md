@@ -5,11 +5,11 @@
 [![python](https://img.shields.io/badge/python-3.14%2B-blue.svg)](https://www.python.org/downloads/)
 [![docs](https://img.shields.io/badge/docs-github_pages-blue)](https://kalvadtech.github.io/woodpecker-mcp/)
 
-MCP server for [Woodpecker CI](https://woodpecker-ci.org). Stateless — each request carries its own authentication token.
+MCP server for [Woodpecker CI](https://woodpecker-ci.org). Stateless - each request carries its own authentication token.
 
 ## Documentation
 
-Full documentation lives on [GitHub Pages](https://kalvadtech.github.io/woodpecker-mcp/) — setup, configuration, a complete usage guide, resources, and troubleshooting.
+Full documentation lives on [GitHub Pages](https://kalvadtech.github.io/woodpecker-mcp/) - setup, configuration, a complete usage guide, resources, and troubleshooting.
 
 ## Features
 
@@ -23,7 +23,7 @@ Full documentation lives on [GitHub Pages](https://kalvadtech.github.io/woodpeck
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `WOODPECKER_SERVER` | Yes | — | Your Woodpecker server URL (e.g. `https://ci.example.com`) |
+| `WOODPECKER_SERVER` | Yes | - | Your Woodpecker server URL (e.g. `https://ci.example.com`) |
 | `MCP_ALLOWED_HOSTS` | No | `localhost` | DNS-rebinding protection allowlist (`*` to disable) |
 
 Authentication is handled per-request via the `Authorization: Bearer <token>` HTTP header.

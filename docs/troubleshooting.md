@@ -26,4 +26,4 @@ disable the protection).
 ## Pasted Woodpecker links don't resolve
 
 Resource support varies by client. Use the `open_woodpecker_url` tool for
-pasted links — it works in every client.
+pasted links - it works in every client.
