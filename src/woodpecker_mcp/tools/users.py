@@ -4,11 +4,12 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from ._common import client
+from ._common import client, safe
 
 
 def register(mcp: MCPServer) -> None:
     @mcp.tool()
+    @safe
     async def list_users(
         page: int = 1,
         per_page: int = 50,
@@ -29,6 +30,7 @@ def register(mcp: MCPServer) -> None:
         return await client().paginate("/users", page=page, per_page=per_page)
 
     @mcp.tool()
+    @safe
     async def get_current_user() -> dict[str, Any]:
         """Get the currently authenticated user.
 
@@ -41,6 +43,7 @@ def register(mcp: MCPServer) -> None:
         return await client().get_json("/user")
 
     @mcp.tool()
+    @safe
     async def get_user_repos(
         include_inactive: bool = False,
         name: str | None = None,
@@ -72,6 +75,7 @@ def register(mcp: MCPServer) -> None:
         return {"repos": data if isinstance(data, list) else []}
 
     @mcp.tool()
+    @safe
     async def get_user_feed(
         page: int = 1,
         per_page: int = 50,

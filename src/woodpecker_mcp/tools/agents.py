@@ -4,11 +4,12 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from ._common import client
+from ._common import client, safe
 
 
 def register(mcp: MCPServer) -> None:
     @mcp.tool()
+    @safe
     async def list_agents(
         page: int = 1,
         per_page: int = 50,
@@ -33,6 +34,7 @@ def register(mcp: MCPServer) -> None:
         return await client().paginate("/agents", page=page, per_page=per_page)
 
     @mcp.tool()
+    @safe
     async def get_agent(agent_id: int) -> dict[str, Any]:
         """Get a single agent by its id.
 
@@ -50,6 +52,7 @@ def register(mcp: MCPServer) -> None:
         return await client().get_json(f"/agents/{agent_id}")
 
     @mcp.tool()
+    @safe
     async def list_agent_tasks(agent_id: int) -> dict[str, Any]:
         """List tasks assigned to an agent.
 

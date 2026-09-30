@@ -4,11 +4,12 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from ._common import client, decode_log_entries
+from ._common import client, decode_log_entries, safe
 
 
 def register(mcp: MCPServer) -> None:
     @mcp.tool()
+    @safe
     async def get_step_logs(
         repo_id: int,
         pipeline_number: int,
@@ -38,6 +39,7 @@ def register(mcp: MCPServer) -> None:
         return {"logs": lines, "text": "\n".join(decoded)}
 
     @mcp.tool()
+    @safe
     async def download_step_logs(
         repo_id: int,
         pipeline_number: int,
@@ -68,6 +70,7 @@ def register(mcp: MCPServer) -> None:
         return {"text": text}
 
     @mcp.tool()
+    @safe
     async def list_pipeline_steps(
         repo_id: int,
         pipeline_number: int,
@@ -109,6 +112,7 @@ def register(mcp: MCPServer) -> None:
         return {"steps": steps, "workflows": workflows}
 
     @mcp.tool()
+    @safe
     async def summarize_logs(
         repo_id: int,
         pipeline_number: int,

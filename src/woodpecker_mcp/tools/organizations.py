@@ -4,11 +4,12 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from ._common import client
+from ._common import client, safe
 
 
 def register(mcp: MCPServer) -> None:
     @mcp.tool()
+    @safe
     async def list_organizations(
         page: int = 1,
         per_page: int = 50,
@@ -32,6 +33,7 @@ def register(mcp: MCPServer) -> None:
         return await client().paginate("/orgs", page=page, per_page=per_page)
 
     @mcp.tool()
+    @safe
     async def get_organization(org_id: int) -> dict[str, Any]:
         """Get an organization by its id.
 
@@ -48,6 +50,7 @@ def register(mcp: MCPServer) -> None:
         return await client().get_json(f"/orgs/{org_id}")
 
     @mcp.tool()
+    @safe
     async def get_org_permissions(org_id: int) -> dict[str, Any]:
         """Get the permissions of the currently authenticated user for the given organization.
 

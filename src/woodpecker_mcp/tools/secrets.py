@@ -4,11 +4,12 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from ._common import client
+from ._common import client, safe
 
 
 def register(mcp: MCPServer) -> None:
     @mcp.tool()
+    @safe
     async def list_repo_secrets(
         repo_id: int,
         page: int = 1,
@@ -34,6 +35,7 @@ def register(mcp: MCPServer) -> None:
         return await client().paginate(f"/repos/{repo_id}/secrets", page=page, per_page=per_page)
 
     @mcp.tool()
+    @safe
     async def create_repo_secret(
         repo_id: int,
         name: str,
@@ -61,6 +63,7 @@ def register(mcp: MCPServer) -> None:
         return await client().post_json(f"/repos/{repo_id}/secrets", json=body)
 
     @mcp.tool()
+    @safe
     async def get_repo_secret(repo_id: int, secret_name: str) -> dict[str, Any]:
         """Get a single repository secret by its name.
 
@@ -78,6 +81,7 @@ def register(mcp: MCPServer) -> None:
         return await client().get_json(f"/repos/{repo_id}/secrets/{secret_name}")
 
     @mcp.tool()
+    @safe
     async def delete_repo_secret(repo_id: int, secret_name: str) -> dict[str, Any]:
         """Delete a secret from a repository.
 

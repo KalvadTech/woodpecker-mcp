@@ -5,7 +5,7 @@ from typing import Any
 from mcp.server.mcpserver import MCPServer
 
 from ..errors import WoodpeckerError
-from ._common import client, decode_b64, decode_log_entries
+from ._common import client, decode_b64, decode_log_entries, safe
 from ._config_lint import lint_config
 
 _LOG_TRUNCATION_LIMIT = 200
@@ -13,6 +13,7 @@ _LOG_TRUNCATION_LIMIT = 200
 
 def register(mcp: MCPServer) -> None:
     @mcp.tool()
+    @safe
     async def explain_pipeline_failure(
         repo_id: int,
         pipeline_number: int | None = None,
@@ -99,6 +100,7 @@ def register(mcp: MCPServer) -> None:
         }
 
     @mcp.tool()
+    @safe
     async def review_pipeline_config(repo_id: int, pipeline_number: int) -> dict[str, Any]:
         """Lint the .woodpecker config files used by a pipeline.
 

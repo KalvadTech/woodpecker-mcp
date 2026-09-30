@@ -4,11 +4,12 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from ._common import client
+from ._common import client, safe
 
 
 def register(mcp: MCPServer) -> None:
     @mcp.tool()
+    @safe
     async def get_health() -> dict[str, Any]:
         """Get health information of the Woodpecker server.
 
@@ -27,6 +28,7 @@ def register(mcp: MCPServer) -> None:
             return {"healthy": False}
 
     @mcp.tool()
+    @safe
     async def get_version() -> dict[str, Any]:
         """Get the Woodpecker server version and build information.
 
@@ -39,6 +41,7 @@ def register(mcp: MCPServer) -> None:
         return await client().get_json("/version")
 
     @mcp.tool()
+    @safe
     async def list_queued_pipelines() -> dict[str, Any]:
         """List pipelines currently in the queue.
 
@@ -58,6 +61,7 @@ def register(mcp: MCPServer) -> None:
         return {"items": data if isinstance(data, list) else []}
 
     @mcp.tool()
+    @safe
     async def get_signature_public_key() -> dict[str, Any]:
         """Get the server's signature public key.
 
@@ -74,6 +78,7 @@ def register(mcp: MCPServer) -> None:
         return {"public_key": text}
 
     @mcp.tool()
+    @safe
     async def get_queue_info() -> dict[str, Any]:
         """Get pipeline queue information.
 

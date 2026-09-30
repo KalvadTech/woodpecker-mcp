@@ -23,6 +23,18 @@ async def test_list_pipelines(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_list_pipelines_not_found(mcp, bound_client):
+    async with respx.mock:
+        route = respx.get(
+            f"{BASE_URL}{API_PREFIX}/repos/999/pipelines",
+            params={"page": 1, "perPage": 50},
+        ).respond(404)
+        with pytest.raises(Exception, match="not found"):
+            await call(mcp, "list_pipelines", repo_id=999)
+        assert route.called
+
+
+@pytest.mark.asyncio
 async def test_get_pipeline(mcp, bound_client):
     fake_pipeline = {"id": 1, "status": "success", "branch": "main"}
     async with respx.mock:

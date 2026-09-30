@@ -6,11 +6,12 @@ from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 
 from ..errors import WoodpeckerError
-from ._common import client
+from ._common import client, safe
 
 
 def register(mcp: MCPServer) -> None:
     @mcp.tool()
+    @safe
     async def search_repositories(
         query: str | None = None,
         page: int = 1,
@@ -38,6 +39,7 @@ def register(mcp: MCPServer) -> None:
         return await client().paginate("/repos", params=params, page=page, per_page=per_page)
 
     @mcp.tool()
+    @safe
     async def get_repository(repo_id: int) -> dict[str, Any]:
         """Get a single repository by its internal Woodpecker ID.
 
@@ -59,6 +61,7 @@ def register(mcp: MCPServer) -> None:
             raise ToolError(e.message) from e
 
     @mcp.tool()
+    @safe
     async def get_repository_by_name(repo_full_name: str) -> dict[str, Any]:
         """Look up a repository by its full name/slug.
 
@@ -79,6 +82,7 @@ def register(mcp: MCPServer) -> None:
             raise ToolError(e.message) from e
 
     @mcp.tool()
+    @safe
     async def list_branches(repo_id: int) -> dict[str, Any]:
         """List branches of a repository.
 
@@ -96,6 +100,7 @@ def register(mcp: MCPServer) -> None:
         return {"branches": data if isinstance(data, list) else []}
 
     @mcp.tool()
+    @safe
     async def list_pull_requests(repo_id: int) -> dict[str, Any]:
         """List active pull requests of a repository.
 
@@ -112,6 +117,7 @@ def register(mcp: MCPServer) -> None:
         return {"pull_requests": data if isinstance(data, list) else []}
 
     @mcp.tool()
+    @safe
     async def repair_repository(repo_id: int) -> dict[str, Any]:
         """Repair a repository by re-syncing its webhook and configuration.
 
@@ -130,6 +136,7 @@ def register(mcp: MCPServer) -> None:
         return await client().post_json(f"/repos/{repo_id}/repair")
 
     @mcp.tool()
+    @safe
     async def get_repo_permissions(repo_id: int) -> dict[str, Any]:
         """Check the current authenticated user's access to a repository.
 
@@ -147,6 +154,7 @@ def register(mcp: MCPServer) -> None:
         return await client().get_json(f"/repos/{repo_id}/permissions")
 
     @mcp.tool()
+    @safe
     async def activate_repository(forge_remote_id: str) -> dict[str, Any]:
         """Activate a repository for the currently authenticated user.
 
@@ -168,6 +176,7 @@ def register(mcp: MCPServer) -> None:
         return await client().post_json("/repos", params={"forge_remote_id": forge_remote_id})
 
     @mcp.tool()
+    @safe
     async def deactivate_repository(repo_id: int) -> dict[str, Any]:
         """Deactivate a repository, removing it from Woodpecker.
 
