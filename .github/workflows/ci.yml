@@ -37,7 +37,9 @@ jobs:
       - run: uv run ty check src/ tests/
 
       - name: Install opengrep
-        run: curl -sSL https://raw.githubusercontent.com/opengrep/opengrep/master/scripts/install.sh | sh
+        run: |
+          curl -sSL -o /usr/local/bin/opengrep https://github.com/opengrep/opengrep/releases/download/v1.30.0/opengrep_manylinux_x86
+          chmod +x /usr/local/bin/opengrep
       - name: opengrep scan
         run: opengrep scan --config auto src/
 
