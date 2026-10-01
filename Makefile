@@ -16,7 +16,7 @@ format:
 	uv run ruff format src/ tests/
 
 typecheck:
-	uv run ty check src/
+	uv run ty check src/ tests/
 
 check: lint format typecheck test
 

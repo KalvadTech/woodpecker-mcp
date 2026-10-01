@@ -31,9 +31,15 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           enable-cache: true
       - run: uv sync --frozen
+      - run: uv audit
       - run: uv run ruff check .
       - run: uv run ruff format --check .
-      - run: uv run ty check src/
+      - run: uv run ty check src/ tests/
+
+      - name: Install opengrep
+        run: curl -sSL https://raw.githubusercontent.com/opengrep/opengrep/master/scripts/install.sh | sh
+      - name: opengrep scan
+        run: opengrep scan --config auto src/
 
   test:
     name: test
