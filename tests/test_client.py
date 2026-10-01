@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from unittest.mock import patch
 
 import httpx
@@ -14,7 +15,7 @@ API_PREFIX = "/api"
 
 
 @pytest.fixture
-async def client() -> WoodpeckerClient:
+async def client() -> AsyncIterator[WoodpeckerClient]:
     async with WoodpeckerClient(BASE_URL, "test-token") as c:
         yield c
 
