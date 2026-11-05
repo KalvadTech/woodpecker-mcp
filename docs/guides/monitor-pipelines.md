@@ -50,6 +50,7 @@ step IDs (the `id` field, not `pid`) needed by the log tools.
 | Question | Tools used |
 |---|---|
 | "Restart the last failed pipeline in repo Y" | `rerun_last_failed` |
+| "What workflows can I run manually?" | `list_workflows` |
 | "Restart pipeline #42" | `restart_pipeline` |
 | "Cancel the running pipeline" | `cancel_pipeline` |
 | "Approve the blocked pipeline" | `approve_pipeline` |

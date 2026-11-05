@@ -19,14 +19,21 @@ async def test_server_metadata():
 @pytest.mark.asyncio
 async def test_all_tools_have_annotations(mcp):
     tools = await mcp.list_tools()
-    assert len(tools) == 51
+    assert len(tools) == 53
     assert all(t.annotations is not None for t in tools)
 
 
 @pytest.mark.asyncio
 async def test_read_tools_are_marked_read_only(mcp):
     tools = {t.name: t for t in await mcp.list_tools()}
-    for name in ("list_pipelines", "get_step_logs", "search_repositories", "get_queue_info"):
+    for name in (
+        "list_pipelines",
+        "get_step_logs",
+        "search_repositories",
+        "get_queue_info",
+        "list_workflows",
+        "review_pipeline_config_content",
+    ):
         assert tools[name].annotations.read_only_hint is True
 
 

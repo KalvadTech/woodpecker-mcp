@@ -62,6 +62,22 @@ The assistant summarizes: *"2 warnings across `build` and `deploy` - both CI
 plugin images are unpinned, so builds/deploys could pick up different plugin
 versions between runs. Want me to draft pinned versions?"*
 
+## Linting a local config before pushing
+
+Use `review_pipeline_config_content` to lint a `.woodpecker.yml` directly,
+without waiting for a pipeline to run:
+
+```json
+{
+  "config_yaml": "steps:\n  - name: build\n    image: node:latest\n",
+  "name": ".woodpecker.yml"
+}
+```
+
+It returns the same `config_files`/`summary` shape as
+`review_pipeline_config`, so the findings are easy to compare before and after
+a fix.
+
 ## Why deterministic beats "just read it"
 
 - **No hallucination** - a finding only exists if a rule actually matched.

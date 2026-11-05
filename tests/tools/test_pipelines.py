@@ -25,6 +25,38 @@ async def test_list_pipelines(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_list_pipelines_with_filters(mcp, bound_client):
+    fake_pipelines = [{"id": 1, "status": "failure", "branch": "main"}]
+    async with respx.mock:
+        route = respx.get(
+            f"{BASE_URL}{API_PREFIX}/repos/1/pipelines",
+            params={
+                "page": "1",
+                "perPage": "50",
+                "branch": "main",
+                "event": "push,pull_request",
+                "status": "failure",
+                "ref": "release",
+                "before": "2026-01-02T00:00:00Z",
+                "after": "2026-01-01T00:00:00Z",
+            },
+        ).respond(200, json=fake_pipelines)
+        result = await call(
+            mcp,
+            "list_pipelines",
+            repo_id=1,
+            branch="main",
+            events=["push", "pull_request"],
+            status="failure",
+            ref="release",
+            before="2026-01-02T00:00:00Z",
+            after="2026-01-01T00:00:00Z",
+        )
+        assert route.called
+        assert result["items"] == fake_pipelines
+
+
+@pytest.mark.asyncio
 async def test_list_pipelines_not_found(mcp, bound_client):
     async with respx.mock:
         route = respx.get(
@@ -72,6 +104,28 @@ async def test_trigger_pipeline_with_variables(mcp, bound_client):
         )
         assert route.called
         assert result["id"] == 4
+
+
+@pytest.mark.asyncio
+async def test_trigger_pipeline_with_message_and_workflow(mcp, bound_client):
+    async with respx.mock:
+        route = respx.post(
+            f"{BASE_URL}{API_PREFIX}/repos/1/pipelines",
+            json={
+                "branch": "main",
+                "message": "release",
+                "workflow": "deploy",
+            },
+        ).respond(200, json={"id": 5, "status": "pending"})
+        result = await call(
+            mcp,
+            "trigger_pipeline",
+            repo_id=1,
+            message="release",
+            workflow="deploy",
+        )
+        assert route.called
+        assert result["id"] == 5
 
 
 @pytest.mark.asyncio
@@ -153,6 +207,22 @@ async def test_get_pipeline_metadata(mcp, bound_client):
         result = await call(mcp, "get_pipeline_metadata", repo_id=1, pipeline_number=42)
         assert route.called
         assert result == fake_metadata
+
+
+@pytest.mark.asyncio
+async def test_list_workflows(mcp, bound_client):
+    fake_workflows = [
+        {"name": "build", "depends_on": []},
+        {"name": "deploy", "depends_on": ["build"]},
+    ]
+    async with respx.mock:
+        route = respx.get(
+            f"{BASE_URL}{API_PREFIX}/repos/1/workflows",
+            params={"branch": "main"},
+        ).respond(200, json=fake_workflows)
+        result = await call(mcp, "list_workflows", repo_id=1, branch="main")
+        assert route.called
+        assert result["workflows"] == fake_workflows
 
 
 @pytest.mark.asyncio
