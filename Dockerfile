@@ -4,8 +4,8 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 RUN addgroup -S woodpecker && adduser -S woodpecker -G woodpecker
 WORKDIR /app
 RUN chown woodpecker:woodpecker /app
-COPY pyproject.toml uv.lock LICENSE README.md ./
 USER woodpecker
+COPY --chown=woodpecker:woodpecker pyproject.toml uv.lock LICENSE README.md ./
 RUN uv sync --frozen --no-dev
 
 # Stage 2: runtime
