@@ -49,7 +49,7 @@ class TestExtractToken:
     def test_error_status_code(self):
         with pytest.raises(AuthHeaderError) as exc_info:
             _extract_token(None)
-        assert exc_info.value.status == 400
+        assert exc_info.value.status == 401
 
 
 class TestLoadBaseUrl:
@@ -133,7 +133,22 @@ class TestWoodpeckerAuthMiddleware:
         assert called
 
     @pytest.mark.asyncio
-    async def test_get_request_passes_through(self):
+    async def test_get_request_requires_auth(self):
+        messages: list[dict] = []
+
+        async def send(msg: dict) -> None:
+            messages.append(msg)
+
+        middleware = WoodpeckerAuthMiddleware(self._noop_app, base_url="https://ci.example.com")
+        scope = self._make_scope(method="GET")
+        await middleware(scope, None, send)
+
+        assert messages[0]["status"] == 401
+        body = json.loads(messages[1]["body"])
+        assert "missing Authorization header" in body["error"]["message"]
+
+    @pytest.mark.asyncio
+    async def test_get_request_with_token_passes_through(self):
         called = False
 
         async def app(scope: dict, receive: Any, send: Any) -> None:
@@ -141,7 +156,10 @@ class TestWoodpeckerAuthMiddleware:
             called = True
 
         middleware = WoodpeckerAuthMiddleware(app, base_url="https://ci.example.com")
-        scope = self._make_scope(method="GET")
+        scope = self._make_scope(
+            method="GET",
+            headers=[(b"authorization", b"Bearer my-token")],
+        )
         await middleware(scope, None, None)
         assert called
 
@@ -154,7 +172,7 @@ class TestWoodpeckerAuthMiddleware:
             called = True
 
         middleware = WoodpeckerAuthMiddleware(app, base_url="https://ci.example.com")
-        scope = self._make_scope(method="POST", path="/up")
+        scope = self._make_scope(method="GET", path="/up")
         await middleware(scope, None, None)
         assert called
 
@@ -171,11 +189,26 @@ class TestWoodpeckerAuthMiddleware:
 
         assert len(messages) == 2
         assert messages[0]["type"] == "http.response.start"
-        assert messages[0]["status"] == 400
+        assert messages[0]["status"] == 401
         body = json.loads(messages[1]["body"])
         assert body["jsonrpc"] == "2.0"
         assert body["error"]["code"] == -32600
         assert "missing Authorization header" in body["error"]["message"]
+
+    @pytest.mark.asyncio
+    async def test_delete_without_token_returns_error(self):
+        messages: list[dict] = []
+
+        async def send(msg: dict) -> None:
+            messages.append(msg)
+
+        middleware = WoodpeckerAuthMiddleware(self._noop_app, base_url="https://ci.example.com")
+        scope = self._make_scope(method="DELETE")
+        await middleware(scope, None, send)
+
+        assert messages[0]["status"] == 401
+        headers = dict(messages[0]["headers"])
+        assert headers[b"www-authenticate"] == b'Bearer realm="woodpecker-mcp"'
 
     @pytest.mark.asyncio
     async def test_wrong_scheme_returns_error(self):
@@ -188,7 +221,7 @@ class TestWoodpeckerAuthMiddleware:
         scope = self._make_scope(headers=[(b"authorization", b"Basic dXNlcjpwYXNz")])
         await middleware(scope, None, send)
 
-        assert messages[0]["status"] == 400
+        assert messages[0]["status"] == 401
         body = json.loads(messages[1]["body"])
         assert "must use Bearer scheme" in body["error"]["message"]
 
@@ -203,7 +236,7 @@ class TestWoodpeckerAuthMiddleware:
         scope = self._make_scope(headers=[(b"authorization", b"Bearer ")])
         await middleware(scope, None, send)
 
-        assert messages[0]["status"] == 400
+        assert messages[0]["status"] == 401
         body = json.loads(messages[1]["body"])
         assert "Bearer token is empty" in body["error"]["message"]
 
@@ -270,6 +303,7 @@ class TestSendJsonrpcError:
         assert start["status"] == 401
         headers = dict(start["headers"])
         assert headers[b"content-type"] == b"application/json"
+        assert headers[b"www-authenticate"] == b'Bearer realm="woodpecker-mcp"'
 
         body_msg = messages[1]
         assert body_msg["type"] == "http.response.body"
