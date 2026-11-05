@@ -3,8 +3,10 @@
 ## "invalid Woodpecker API token or unauthorized" (401)
 
 The `Authorization` header is missing, malformed, or the token was rejected.
-Make sure you send `Authorization: Bearer <token>` with **every** request and
-that the token is valid for the configured `WOODPECKER_SERVER`.
+The server returns `401 Unauthorized` with a `WWW-Authenticate: Bearer` header.
+Make sure you send `Authorization: Bearer <token>` with **every** request
+(except the `/up` liveness endpoint) and that the token is valid for the
+configured `WOODPECKER_SERVER`.
 
 ## "forbidden" (403)
 

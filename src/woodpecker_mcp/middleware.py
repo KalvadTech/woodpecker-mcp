@@ -17,6 +17,7 @@ from .errors import AuthHeaderError
 _HEADER_AUTH = b"authorization"
 _TOKEN_PREFIX = "Bearer "
 _HEALTH_PATHS = {"/up"}
+_WWW_AUTHENTICATE = b'Bearer realm="woodpecker-mcp"'
 
 
 class WoodpeckerAuthMiddleware:
@@ -35,7 +36,7 @@ class WoodpeckerAuthMiddleware:
         if scope.get("type") != "http":
             await self._app(scope, receive, send)
             return
-        if scope.get("path") in _HEALTH_PATHS or scope.get("method") == "GET":
+        if scope.get("path") in _HEALTH_PATHS:
             await self._app(scope, receive, send)
             return
 
@@ -104,6 +105,7 @@ async def _send_jsonrpc_error(send: Any, exc: AuthHeaderError) -> None:
             "headers": [
                 (b"content-type", b"application/json"),
                 (b"content-length", str(len(body)).encode("ascii")),
+                (b"www-authenticate", _WWW_AUTHENTICATE),
             ],
         }
     )
