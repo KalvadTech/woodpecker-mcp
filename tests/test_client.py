@@ -78,13 +78,29 @@ async def test_paginate_caps_per_page_at_max(client: WoodpeckerClient):
     async with respx.mock:
         route = respx.get(
             f"{BASE_URL}{API_PREFIX}/items",
-            params={"page": "1", "perPage": "100"},
+            params={"page": "1", "perPage": "50"},
         ).respond(200, json=fake_data)
         result = await client.paginate("/items", per_page=500)
 
         assert route.called
         assert result["items"] == fake_data
-        assert result["per_page"] == 100
+        assert result["per_page"] == 50
+
+
+@pytest.mark.asyncio
+async def test_paginate_per_page_100_is_capped_and_has_more(client: WoodpeckerClient):
+    """Requesting 100 must use 50 so has_more reflects the real server page size."""
+    fake_data = [{"id": i} for i in range(50)]
+    async with respx.mock:
+        route = respx.get(
+            f"{BASE_URL}{API_PREFIX}/items",
+            params={"page": "1", "perPage": "50"},
+        ).respond(200, json=fake_data)
+        result = await client.paginate("/items", per_page=100)
+
+        assert route.called
+        assert result["per_page"] == 50
+        assert result["has_more"] is True
 
 
 @pytest.mark.asyncio
@@ -526,3 +542,17 @@ async def test_iter_all_empty(client: WoodpeckerClient):
             items.append(item)
 
         assert items == []
+
+
+@pytest.mark.asyncio
+async def test_iter_all_stops_at_max_pages(client: WoodpeckerClient):
+    """iter_all must not loop forever if the server ignores pagination."""
+    full_page = [{"id": i} for i in range(2)]
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/items").respond(200, json=full_page)
+        items = []
+        async for item in client.iter_all("/items", page_size=2, max_pages=2):
+            items.append(item)
+
+        assert len(items) == 4
+        assert route.call_count == 2

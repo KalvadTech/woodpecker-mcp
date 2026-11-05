@@ -47,8 +47,9 @@ something like:
       "state": "failure",
       "error": "exit code 1",
       "steps": [
-        {"pid": 1, "name": "clone", "state": "success", "exit_code": 0},
+        {"id": 10, "pid": 1, "name": "clone", "state": "success", "exit_code": 0},
         {
+          "id": 11,
           "pid": 2,
           "name": "test",
           "state": "failure",

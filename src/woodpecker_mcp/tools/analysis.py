@@ -36,8 +36,8 @@ def register(mcp: MCPServer) -> None:
             Dict with:
             - 'pipeline': metadata (number, status, event, branch, author, commit,
               duration_seconds, changed_files)
-            - 'workflows': list of workflows with steps (pid, name, state, exit_code,
-              duration_seconds, and truncated logs for failed steps)
+            - 'workflows': list of workflows with steps (id, pid, name, state,
+              exit_code, duration_seconds, and truncated logs for failed steps)
             - 'config': list of decoded .woodpecker.yml configuration files
 
         Related tools:
@@ -191,6 +191,7 @@ async def _process_steps(
         exit_code = child.get("exit_code")
 
         step_entry: dict[str, Any] = {
+            "id": child.get("id"),
             "pid": child.get("pid"),
             "name": child.get("name", ""),
             "state": step_state,

@@ -43,7 +43,7 @@ whether a deploy is stuck behind a long build.
 
 `summarize_logs` returns logs plus error/warning counts - a fast way to scan a
 step without dumping everything into context. `list_pipeline_steps` reveals the
-step ids (`pid`s) needed by the log tools.
+step IDs (the `id` field, not `pid`) needed by the log tools.
 
 ## "Restart or rerun"
 
@@ -53,6 +53,7 @@ step ids (`pid`s) needed by the log tools.
 | "Restart pipeline #42" | `restart_pipeline` |
 | "Cancel the running pipeline" | `cancel_pipeline` |
 | "Approve the blocked pipeline" | `approve_pipeline` |
+| "Decline the blocked pipeline" | `decline_pipeline` |
 
 ## "Schedule or manage"
 

@@ -82,17 +82,15 @@ def register(mcp: MCPServer) -> None:
     async def get_queue_info() -> dict[str, Any]:
         """Get pipeline queue information.
 
-        Shows the current state of the pipeline queue, including running and pending jobs.
+        Shows the current state of the pipeline queue, including pending,
+        waiting, and running tasks. Requires admin rights.
 
         Returns:
-            Dict with 'running' (count of active pipelines), 'pending' (count waiting),
-            and 'stats' (detailed queue statistics).
+            Dict with 'pending', 'waiting_on_deps', and 'running' task lists,
+            plus 'stats' (worker/pending/waiting/running counts) and 'paused'.
 
         Related tools:
-            - list_pipelines: See specific pipelines in the queue.
+            - list_queued_pipelines: See specific pipelines in the queue.
         """
-        try:
-            data = await client().get_json("/queue")
-            return data if data is not None else {"running": 0, "pending": 0, "stats": {}}
-        except Exception:
-            return {"running": 0, "pending": 0, "stats": {}}
+        data = await client().get_json("/queue/info")
+        return data if data is not None else {}

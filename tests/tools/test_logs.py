@@ -43,6 +43,7 @@ async def test_list_pipeline_steps(mcp, bound_client):
                 "name": "build",
                 "children": [
                     {
+                        "id": 11,
                         "pid": 1,
                         "name": "Build binary",
                         "state": "success",
@@ -51,6 +52,7 @@ async def test_list_pipeline_steps(mcp, bound_client):
                         "exit_code": 0,
                     },
                     {
+                        "id": 12,
                         "pid": 2,
                         "name": "Run tests",
                         "state": "success",
@@ -70,7 +72,10 @@ async def test_list_pipeline_steps(mcp, bound_client):
         assert route.called
         assert len(result["steps"]) == 2
         assert result["steps"][0]["workflow"] == "build"
+        assert result["steps"][0]["id"] == 11
+        assert result["steps"][0]["pid"] == 1
         assert result["steps"][0]["name"] == "Build binary"
+        assert result["steps"][1]["id"] == 12
         assert result["steps"][1]["name"] == "Run tests"
 
 

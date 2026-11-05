@@ -5,6 +5,7 @@ from typing import Any
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 
+from ..client import _MAX_PER_PAGE
 from ..errors import WoodpeckerError
 from ._common import client, safe
 
@@ -19,13 +20,13 @@ def register(mcp: MCPServer) -> None:
     ) -> dict[str, Any]:
         """Search repositories visible to the current user.
 
-        Returns a paginated list of repositories. Use this to find the
-        internal Woodpecker repo_id needed by most other tools.
+        Returns repositories the authenticated user has access to. Use this to
+        find the internal Woodpecker repo_id needed by most other tools.
 
         Args:
             query: Optional filter string to match against repository names.
             page: Page number (1-indexed).
-            per_page: Items per page (default 50).
+            per_page: Items per page (default 50, max 50).
 
         Returns:
             Dict with 'items' list of repos, each containing 'id', 'full_name',
@@ -35,8 +36,18 @@ def register(mcp: MCPServer) -> None:
         Related tools:
             - get_repository: Get full details of a single repo by ID.
         """
-        params: dict[str, Any] | None = {"query": query} if query else None
-        return await client().paginate("/repos", params=params, page=page, per_page=per_page)
+        params: dict[str, Any] | None = {"name": query} if query else None
+        data = await client().get_json("/user/repos", params=params)
+        repos = data if isinstance(data, list) else []
+        page = max(1, page)
+        per_page = max(1, min(per_page, _MAX_PER_PAGE))
+        start = (page - 1) * per_page
+        return {
+            "items": repos[start : start + per_page],
+            "page": page,
+            "per_page": per_page,
+            "has_more": start + per_page < len(repos),
+        }
 
     @mcp.tool()
     @safe
