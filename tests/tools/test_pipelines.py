@@ -1,3 +1,5 @@
+import base64
+
 import pytest
 import respx
 
@@ -118,8 +120,12 @@ async def test_decline_pipeline(mcp, bound_client):
 
 @pytest.mark.asyncio
 async def test_get_pipeline_config(mcp, bound_client):
+    config_yaml = "pipeline:\n  test:\n    image: alpine"
     fake_config = [
-        {"name": ".woodpecker.yml", "data": "pipeline:\n  test:\n    image: alpine"},
+        {
+            "name": ".woodpecker.yml",
+            "data": base64.b64encode(config_yaml.encode()).decode(),
+        },
     ]
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42/config").respond(
@@ -127,7 +133,7 @@ async def test_get_pipeline_config(mcp, bound_client):
         )
         result = await call(mcp, "get_pipeline_config", repo_id=1, pipeline_number=42)
         assert route.called
-        assert result["configs"] == fake_config
+        assert result["configs"] == [{"name": ".woodpecker.yml", "data": config_yaml}]
 
 
 @pytest.mark.asyncio

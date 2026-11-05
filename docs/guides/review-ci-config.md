@@ -11,7 +11,7 @@ produces the same findings, and it never hallucinates a "looks good" verdict.
 |---|---|---|---|
 | `yaml-parse-error` | error | The config is not valid YAML | Fix the YAML syntax |
 | `invalid-when-event` | error | `when.event` uses a value outside the valid set (push, pull_request, pull_request_closed, pull_request_metadata, tag, release, deployment, cron, manual) | Correct the event name (watch for typos like `pull-request`) |
-| `when-without-event` | warn | A `when` block has no `event` filter, so the step runs on **all** events | Add an `event:` filter |
+| `when-without-event` | warn | A `when` block has no filters at all (no event, branch, status, path, etc.), so the step runs on every event | Add an `event` or another filter |
 | `unpinned-image` | warn | A step `image` has no tag, uses `latest`, or a floating tag (`node:24`, `debian:stable`) | Pin a version tag (`node:24.19.0`) or a digest |
 | `deprecated-secrets-list` | warn | Step uses the `secrets: [...]` list | Use `environment` with `from_secret` |
 | `deprecated-step-group` | warn | Step uses `group:` | Use `depends_on` |
@@ -75,7 +75,7 @@ versions between runs. Want me to draft pinned versions?"*
 
 - **Works for any pipeline** - unlike `explain_pipeline_failure`, this tool
   doesn't care about the pipeline status; it reviews the config regardless.
-- **Pair with `get_pipeline_config`** if you need the raw, undecoded YAML.
+- **Pair with `get_pipeline_config`** if you need the decoded YAML without linting.
 - **Pair with `explain_pipeline_failure`** when a pipeline *failed to parse*:
   `review_pipeline_config` will surface the `yaml-parse-error` or
   `invalid-when-event` that caused it.
