@@ -2,16 +2,50 @@ from __future__ import annotations
 
 import base64
 import contextlib
+import os
 import re
 from functools import wraps
 from typing import Any
 
+from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
+from mcp.types import ToolAnnotations
 
 from ..client import get_woodpecker_client
 from ..errors import WoodpeckerError
 
 _ANSI_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
+READ_ONLY = ToolAnnotations(read_only_hint=True)
+WRITE = ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=False)
+DESTRUCTIVE = ToolAnnotations(read_only_hint=False, destructive_hint=True, idempotent_hint=False)
+IDEMPOTENT_WRITE = ToolAnnotations(
+    read_only_hint=False, destructive_hint=False, idempotent_hint=True
+)
+
+
+def read_only_enabled() -> bool:
+    """Return True when MCP_READ_ONLY is set to a truthy value."""
+    return os.environ.get("MCP_READ_ONLY", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def tool(
+    mcp: MCPServer,
+    *,
+    annotations: ToolAnnotations = READ_ONLY,
+) -> Any:
+    """Register a tool with annotations, honoring MCP_READ_ONLY.
+
+    In read-only mode only tools marked read-only are registered, so an agent
+    cannot trigger pipelines, modify secrets, or delete resources.
+    """
+
+    def decorator(fn: Any) -> Any:
+        if read_only_enabled() and annotations.read_only_hint is not True:
+            return fn
+        return mcp.tool(annotations=annotations)(fn)
+
+    return decorator
 
 
 def client() -> Any:

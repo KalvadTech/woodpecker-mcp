@@ -20,6 +20,7 @@ make install
 |---|---|---|---|
 | `WOODPECKER_SERVER` | Yes | - | Your Woodpecker server URL (e.g. `https://ci.example.com`) |
 | `MCP_ALLOWED_HOSTS` | No | `localhost` | DNS-rebinding protection allowlist (`*` to disable) |
+| `MCP_READ_ONLY` | No | `false` | Set to `true` to hide all write and destructive tools |
 
 Authentication is handled per-request via the `Authorization: Bearer <token>`
 HTTP header. The server is stateless - it stores nothing and does not keep the

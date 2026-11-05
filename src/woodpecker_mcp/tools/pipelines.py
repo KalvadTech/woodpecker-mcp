@@ -4,11 +4,11 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from ._common import client, decode_b64, safe
+from ._common import DESTRUCTIVE, READ_ONLY, WRITE, client, decode_b64, safe, tool
 
 
 def register(mcp: MCPServer) -> None:
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def list_pipelines(
         repo_id: int,
@@ -36,7 +36,7 @@ def register(mcp: MCPServer) -> None:
         """
         return await client().paginate(f"/repos/{repo_id}/pipelines", page=page, per_page=per_page)
 
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def get_pipeline(repo_id: int, pipeline_number: int) -> dict[str, Any]:
         """Get a single pipeline by repo and pipeline number.
@@ -56,7 +56,7 @@ def register(mcp: MCPServer) -> None:
         """
         return await client().get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}")
 
-    @mcp.tool()
+    @tool(mcp, annotations=WRITE)
     @safe
     async def trigger_pipeline(
         repo_id: int,
@@ -87,7 +87,7 @@ def register(mcp: MCPServer) -> None:
             body["variables"] = variables
         return await client().post_json(f"/repos/{repo_id}/pipelines", json=body)
 
-    @mcp.tool()
+    @tool(mcp, annotations=WRITE)
     @safe
     async def restart_pipeline(repo_id: int, pipeline_number: int) -> dict[str, Any]:
         """Restart a pipeline.
@@ -108,7 +108,7 @@ def register(mcp: MCPServer) -> None:
         """
         return await client().post_json(f"/repos/{repo_id}/pipelines/{pipeline_number}")
 
-    @mcp.tool()
+    @tool(mcp, annotations=DESTRUCTIVE)
     @safe
     async def cancel_pipeline(repo_id: int, pipeline_number: int) -> dict[str, Any]:
         """Cancel a running pipeline.
@@ -128,7 +128,7 @@ def register(mcp: MCPServer) -> None:
         """
         return await client().post_json(f"/repos/{repo_id}/pipelines/{pipeline_number}/cancel")
 
-    @mcp.tool()
+    @tool(mcp, annotations=WRITE)
     @safe
     async def approve_pipeline(repo_id: int, pipeline_number: int) -> dict[str, Any]:
         """Approve and start a pending pipeline.
@@ -148,7 +148,7 @@ def register(mcp: MCPServer) -> None:
         """
         return await client().post_json(f"/repos/{repo_id}/pipelines/{pipeline_number}/approve")
 
-    @mcp.tool()
+    @tool(mcp, annotations=WRITE)
     @safe
     async def decline_pipeline(repo_id: int, pipeline_number: int) -> dict[str, Any]:
         """Decline a blocked pipeline that requires manual approval.
@@ -168,7 +168,7 @@ def register(mcp: MCPServer) -> None:
         """
         return await client().post_json(f"/repos/{repo_id}/pipelines/{pipeline_number}/decline")
 
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def get_pipeline_config(repo_id: int, pipeline_number: int) -> dict[str, Any]:
         """Get configuration files for a pipeline.
@@ -201,7 +201,7 @@ def register(mcp: MCPServer) -> None:
         )
         return {"configs": configs}
 
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def get_pipeline_metadata(repo_id: int, pipeline_number: int) -> dict[str, Any]:
         """Get the CI metadata for a pipeline.
@@ -223,7 +223,7 @@ def register(mcp: MCPServer) -> None:
         """
         return await client().get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}/metadata")
 
-    @mcp.tool()
+    @tool(mcp, annotations=WRITE)
     @safe
     async def rerun_last_failed(repo_id: int) -> dict[str, Any]:
         """Find the last failed pipeline for a repository and restart it.
