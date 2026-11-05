@@ -22,8 +22,9 @@ def register(mcp: MCPServer) -> None:
         Args:
             repo_id: The internal Woodpecker repository ID.
             pipeline_number: The pipeline number (e.g. 42).
-            step_id: The step ID (pid) within the pipeline. Use list_pipeline_steps
-                     to discover step IDs.
+            step_id: The step's database ID (the `id` field returned by
+                     list_pipeline_steps). Note that `pid` is only the step's
+                     display/order index and is not accepted here.
 
         Returns:
             Dict with 'logs' list of log entries and 'text' as a single string
@@ -53,8 +54,9 @@ def register(mcp: MCPServer) -> None:
         Args:
             repo_id: The internal Woodpecker repository ID.
             pipeline_number: The pipeline number (e.g. 42).
-            step_id: The step ID (pid) within the pipeline. Use list_pipeline_steps
-                     to discover step IDs.
+            step_id: The step's database ID (the `id` field returned by
+                     list_pipeline_steps). Note that `pid` is only the step's
+                     display/order index and is not accepted here.
 
         Returns:
             Dict with 'text' containing the raw log output.
@@ -77,7 +79,7 @@ def register(mcp: MCPServer) -> None:
     ) -> dict[str, Any]:
         """List all workflows and steps for a pipeline with their status.
 
-        Use this to discover step IDs (pids) needed by get_step_logs or
+        Use this to discover step IDs (the `id` field) needed by get_step_logs or
         summarize_logs, and to see the overall pipeline structure.
 
         Args:
@@ -85,11 +87,12 @@ def register(mcp: MCPServer) -> None:
             pipeline_number: The pipeline number (e.g. 42).
 
         Returns:
-            Dict with 'steps' list (each having 'workflow', 'pid', 'name',
+            Dict with 'steps' list (each having 'workflow', 'id', 'pid', 'name',
             'state', 'started', 'finished', 'exit_code') and 'workflows' list.
+            Use the step 'id' (not 'pid') with get_step_logs or summarize_logs.
 
         Related tools:
-            - get_step_logs: Fetch logs for a specific step using its pid.
+            - get_step_logs: Fetch logs for a specific step using its id.
             - summarize_logs: Get logs with error/warning counts.
         """
         data = await client().get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}")
@@ -101,6 +104,7 @@ def register(mcp: MCPServer) -> None:
                 steps.append(
                     {
                         "workflow": wf_name,
+                        "id": child.get("id"),
                         "pid": child.get("pid"),
                         "name": child.get("name", ""),
                         "state": child.get("state", ""),
@@ -125,8 +129,9 @@ def register(mcp: MCPServer) -> None:
         Args:
             repo_id: The internal Woodpecker repository ID.
             pipeline_number: The pipeline number (e.g. 42).
-            step_id: The step ID (pid) within the pipeline. Use list_pipeline_steps
-                     to discover step IDs.
+            step_id: The step's database ID (the `id` field returned by
+                     list_pipeline_steps). Note that `pid` is only the step's
+                     display/order index and is not accepted here.
 
         Returns:
             Dict with 'total_lines', 'error_lines' (count of lines containing 'error'),

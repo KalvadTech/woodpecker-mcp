@@ -70,22 +70,37 @@ async def test_get_signature_public_key(mcp, bound_client):
 
 @pytest.mark.asyncio
 async def test_get_queue_info(mcp, bound_client):
-    fake_queue = {"running": 2, "pending": 5, "stats": {}}
+    fake_queue = {
+        "pending": [],
+        "waiting_on_deps": [],
+        "running": [{"repo_id": 1, "number": 42}],
+        "stats": {"worker_count": 1, "pending_count": 0, "running_count": 1},
+        "paused": False,
+    }
     async with respx.mock:
-        route = respx.get(f"{BASE_URL}{API_PREFIX}/queue").respond(
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/queue/info").respond(
             200,
             json=fake_queue,
         )
         result = await call(mcp, "get_queue_info")
         assert route.called
-        assert result["running"] == 2
+        assert result["stats"]["running_count"] == 1
+        assert result["paused"] is False
 
 
 @pytest.mark.asyncio
 async def test_get_queue_info_empty(mcp, bound_client):
     async with respx.mock:
-        route = respx.get(f"{BASE_URL}{API_PREFIX}/queue").respond(200, content=b"")
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/queue/info").respond(200, content=b"")
         result = await call(mcp, "get_queue_info")
         assert route.called
-        assert result["running"] == 0
-        assert result["pending"] == 0
+        assert result == {}
+
+
+@pytest.mark.asyncio
+async def test_get_queue_info_forbidden(mcp, bound_client):
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/queue/info").respond(403)
+        with pytest.raises(Exception, match="forbidden"):
+            await call(mcp, "get_queue_info")
+        assert route.called

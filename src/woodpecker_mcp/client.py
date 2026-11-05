@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_TIMEOUT = httpx.Timeout(connect=5.0, read=30.0, write=30.0, pool=5.0)
 _DEFAULT_PER_PAGE = 50
-_MAX_PER_PAGE = 100
+# Woodpecker caps perPage at 50 server-side, so never request more than that.
+_MAX_PER_PAGE = 50
+_MAX_PAGES = 1000
 _DEFAULT_MAX_RETRIES = 3
 _DEFAULT_BACKOFF_BASE = 1.0
 _DEFAULT_BACKOFF_MAX = 10.0
@@ -307,14 +309,15 @@ class WoodpeckerClient:
         so callers (the LLM) can decide whether to keep going.
         """
         merged = dict(params or {})
-        merged["page"] = page
-        merged["perPage"] = min(per_page, _MAX_PER_PAGE)
+        merged["page"] = max(1, page)
+        merged["perPage"] = max(1, min(per_page, _MAX_PER_PAGE))
         data = await self.get_json(path, params=merged)
+        per_page_applied = merged["perPage"]
         return {
             "items": data,
-            "page": page,
-            "per_page": merged["perPage"],
-            "has_more": len(data) == merged["perPage"] if isinstance(data, list) else False,
+            "page": merged["page"],
+            "per_page": per_page_applied,
+            "has_more": len(data) == per_page_applied if isinstance(data, list) else False,
         }
 
     async def iter_all(
@@ -322,14 +325,22 @@ class WoodpeckerClient:
         path: str,
         params: dict[str, Any] | None = None,
         page_size: int = _MAX_PER_PAGE,
+        max_pages: int = _MAX_PAGES,
     ) -> AsyncIterator[dict[str, Any]]:
         """Iterate every item across all pages.
 
         Used internally where a tool truly needs the full set (e.g. finding
         all failed pipelines). Yields items one at a time.
+
+        Args:
+            path: API path (without /api prefix)
+            params: Query parameters
+            page_size: Items per page (capped at 50 by the server)
+            max_pages: Safety limit to avoid an infinite loop if a server
+                       ignores pagination parameters.
         """
         page = 1
-        while True:
+        while page <= max_pages:
             result = await self.paginate(path, params=params, page=page, per_page=page_size)
             items = result["items"]
             if isinstance(items, list):
@@ -341,6 +352,7 @@ class WoodpeckerClient:
                 yield items
                 return
             page += 1
+        logger.warning("iter_all stopped after %d pages for %s", max_pages, path)
 
     async def _json(
         self,

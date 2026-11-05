@@ -150,6 +150,26 @@ def register(mcp: MCPServer) -> None:
 
     @mcp.tool()
     @safe
+    async def decline_pipeline(repo_id: int, pipeline_number: int) -> dict[str, Any]:
+        """Decline a blocked pipeline that requires manual approval.
+
+        Use this when a pipeline is blocked awaiting approval and should not run.
+
+        Args:
+            repo_id: The internal Woodpecker repository ID.
+            pipeline_number: The pipeline number to decline (e.g. 42).
+
+        Returns:
+            The declined pipeline object with 'status' set to 'declined'.
+
+        Related tools:
+            - get_pipeline: Check if the pipeline is blocked.
+            - approve_pipeline: Approve and run a blocked pipeline instead.
+        """
+        return await client().post_json(f"/repos/{repo_id}/pipelines/{pipeline_number}/decline")
+
+    @mcp.tool()
+    @safe
     async def get_pipeline_config(repo_id: int, pipeline_number: int) -> dict[str, Any]:
         """Get configuration files for a pipeline.
 

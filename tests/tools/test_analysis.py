@@ -105,6 +105,8 @@ async def test_explain_with_pipeline_number(mcp, bound_client):
 
         steps = result["workflows"][0]["steps"]
         assert len(steps) == 2
+        assert steps[0]["id"] == 10
+        assert steps[0]["pid"] == 1
         assert steps[0]["name"] == "clone"
         assert steps[0]["state"] == "success"
         assert "logs" not in steps[0]

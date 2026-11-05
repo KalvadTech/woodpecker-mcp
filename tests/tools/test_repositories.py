@@ -13,7 +13,7 @@ async def test_search_repositories(mcp, bound_client):
         {"id": 2, "name": "repo-two", "owner": "testuser", "active": False},
     ]
     async with respx.mock:
-        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos").respond(
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/user/repos").respond(
             200,
             json=fake_repos,
         )
@@ -30,12 +30,24 @@ async def test_search_repositories_with_query(mcp, bound_client):
     ]
     async with respx.mock:
         route = respx.get(
-            f"{BASE_URL}{API_PREFIX}/repos",
-            params={"query": "repo-one", "page": 1, "perPage": 50},
+            f"{BASE_URL}{API_PREFIX}/user/repos",
+            params={"name": "repo-one"},
         ).respond(200, json=fake_repos)
         result = await call(mcp, "search_repositories", query="repo-one")
         assert route.called
         assert result["items"] == fake_repos
+
+
+@pytest.mark.asyncio
+async def test_search_repositories_client_side_pagination(mcp, bound_client):
+    fake_repos = [{"id": i} for i in range(3)]
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/user/repos").respond(200, json=fake_repos)
+        result = await call(mcp, "search_repositories", page=2, per_page=2)
+        assert route.called
+        assert result["items"] == [{"id": 2}]
+        assert result["per_page"] == 2
+        assert result["has_more"] is False
 
 
 @pytest.mark.asyncio

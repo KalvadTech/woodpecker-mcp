@@ -106,6 +106,17 @@ async def test_approve_pipeline(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_decline_pipeline(mcp, bound_client):
+    async with respx.mock:
+        route = respx.post(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42/decline").respond(
+            200, json={"id": 42, "status": "declined"}
+        )
+        result = await call(mcp, "decline_pipeline", repo_id=1, pipeline_number=42)
+        assert route.called
+        assert result["status"] == "declined"
+
+
+@pytest.mark.asyncio
 async def test_get_pipeline_config(mcp, bound_client):
     fake_config = [
         {"name": ".woodpecker.yml", "data": "pipeline:\n  test:\n    image: alpine"},
