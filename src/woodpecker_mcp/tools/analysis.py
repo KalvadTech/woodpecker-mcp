@@ -6,7 +6,7 @@ from typing import Any
 from mcp.server.mcpserver import MCPServer
 
 from ..errors import WoodpeckerError
-from ._common import client, decode_b64, decode_log_entries, safe, truncate_text
+from ._common import READ_ONLY, client, decode_b64, decode_log_entries, safe, tool, truncate_text
 from ._config_lint import lint_config
 
 _LOG_HEAD_LINES = 100
@@ -16,7 +16,7 @@ _MAX_LOG_FETCHES = 5
 
 
 def register(mcp: MCPServer) -> None:
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def explain_pipeline_failure(
         repo_id: int,
@@ -107,7 +107,7 @@ def register(mcp: MCPServer) -> None:
             ],
         }
 
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def review_pipeline_config(repo_id: int, pipeline_number: int) -> dict[str, Any]:
         """Lint the .woodpecker config files used by a pipeline.

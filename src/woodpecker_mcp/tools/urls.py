@@ -6,14 +6,14 @@ from urllib.parse import urlsplit
 from mcp.server.mcpserver import MCPServer
 
 from ..formatting import format_pipeline, format_repo
-from ._common import client, safe
+from ._common import READ_ONLY, client, safe, tool
 
 _REPO_PATTERN = re.compile(r"^/repos/(\d+)$")
 _PIPELINE_PATTERN = re.compile(r"^/repos/(\d+)/pipeline/(\d+)$")
 
 
 def register(mcp: MCPServer) -> None:
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def open_woodpecker_url(url: str) -> str:
         """Open a Woodpecker URL and return the entity as Markdown.

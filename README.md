@@ -25,8 +25,16 @@ Full documentation lives on [GitHub Pages](https://kalvadtech.github.io/woodpeck
 |---|---|---|---|
 | `WOODPECKER_SERVER` | Yes | - | Your Woodpecker server URL (e.g. `https://ci.example.com`) |
 | `MCP_ALLOWED_HOSTS` | No | `localhost` | DNS-rebinding protection allowlist (`*` to disable) |
+| `MCP_READ_ONLY` | No | `false` | Set to `true` to hide all write and destructive tools |
 
 Authentication is handled per-request via the `Authorization: Bearer <token>` HTTP header.
+
+### Read-only mode
+
+Set `MCP_READ_ONLY=true` when connecting an autonomous agent or exposing the
+server broadly. Only read-only tools are registered; triggering, restarting,
+cancelling, creating secrets/cron jobs, and other mutations disappear from the
+tool list.
 
 ## Quick Start
 

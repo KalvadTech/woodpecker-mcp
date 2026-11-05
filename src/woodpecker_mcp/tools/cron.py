@@ -4,11 +4,11 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from ._common import client, safe
+from ._common import DESTRUCTIVE, READ_ONLY, WRITE, client, safe, tool
 
 
 def register(mcp: MCPServer) -> None:
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def list_cron_jobs(
         repo_id: int,
@@ -33,7 +33,7 @@ def register(mcp: MCPServer) -> None:
         """
         return await client().paginate(f"/repos/{repo_id}/cron", page=page, per_page=per_page)
 
-    @mcp.tool()
+    @tool(mcp, annotations=WRITE)
     @safe
     async def create_cron_job(
         repo_id: int,
@@ -66,7 +66,7 @@ def register(mcp: MCPServer) -> None:
         }
         return await client().post_json(f"/repos/{repo_id}/cron", json=body)
 
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def get_cron_job(repo_id: int, cron_id: int) -> dict[str, Any]:
         """Get a single cron job by its id.
@@ -84,7 +84,7 @@ def register(mcp: MCPServer) -> None:
         """
         return await client().get_json(f"/repos/{repo_id}/cron/{cron_id}")
 
-    @mcp.tool()
+    @tool(mcp, annotations=DESTRUCTIVE)
     @safe
     async def delete_cron_job(repo_id: int, cron_id: int) -> dict[str, Any]:
         """Delete a cron job from a repository.
@@ -102,7 +102,7 @@ def register(mcp: MCPServer) -> None:
         await client().delete(f"/repos/{repo_id}/cron/{cron_id}")
         return {"deleted": True}
 
-    @mcp.tool()
+    @tool(mcp, annotations=WRITE)
     @safe
     async def trigger_cron_job(repo_id: int, cron_id: int) -> dict[str, Any]:
         """Trigger a cron job immediately.

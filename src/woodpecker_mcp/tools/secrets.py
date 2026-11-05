@@ -4,11 +4,11 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from ._common import client, safe
+from ._common import DESTRUCTIVE, READ_ONLY, WRITE, client, safe, tool
 
 
 def register(mcp: MCPServer) -> None:
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def list_repo_secrets(
         repo_id: int,
@@ -34,7 +34,7 @@ def register(mcp: MCPServer) -> None:
         """
         return await client().paginate(f"/repos/{repo_id}/secrets", page=page, per_page=per_page)
 
-    @mcp.tool()
+    @tool(mcp, annotations=WRITE)
     @safe
     async def create_repo_secret(
         repo_id: int,
@@ -62,7 +62,7 @@ def register(mcp: MCPServer) -> None:
         body: dict[str, Any] = {"name": name, "value": value}
         return await client().post_json(f"/repos/{repo_id}/secrets", json=body)
 
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def get_repo_secret(repo_id: int, secret_name: str) -> dict[str, Any]:
         """Get a single repository secret by its name.
@@ -80,7 +80,7 @@ def register(mcp: MCPServer) -> None:
         """
         return await client().get_json(f"/repos/{repo_id}/secrets/{secret_name}")
 
-    @mcp.tool()
+    @tool(mcp, annotations=DESTRUCTIVE)
     @safe
     async def delete_repo_secret(repo_id: int, secret_name: str) -> dict[str, Any]:
         """Delete a secret from a repository.

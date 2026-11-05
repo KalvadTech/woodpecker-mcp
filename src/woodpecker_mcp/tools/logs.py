@@ -6,10 +6,12 @@ from typing import Any
 from mcp.server.mcpserver import MCPServer
 
 from ._common import (
+    READ_ONLY,
     client,
     decode_log_entries,
     safe,
     strip_ansi,
+    tool,
     truncate_text,
 )
 
@@ -20,7 +22,7 @@ _WARNING_RE = re.compile(r"\bwarning\b", re.IGNORECASE)
 
 
 def register(mcp: MCPServer) -> None:
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def get_step_logs(
         repo_id: int,
@@ -66,7 +68,7 @@ def register(mcp: MCPServer) -> None:
             "text": text,
         }
 
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def download_step_logs(
         repo_id: int,
@@ -115,7 +117,7 @@ def register(mcp: MCPServer) -> None:
             "text": text,
         }
 
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def list_pipeline_steps(
         repo_id: int,
@@ -159,7 +161,7 @@ def register(mcp: MCPServer) -> None:
                 )
         return {"steps": steps, "workflows": workflows}
 
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def summarize_logs(
         repo_id: int,

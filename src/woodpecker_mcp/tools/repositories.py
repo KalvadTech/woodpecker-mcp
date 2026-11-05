@@ -7,11 +7,11 @@ from mcp.server.mcpserver.exceptions import ToolError
 
 from ..client import _MAX_PER_PAGE
 from ..errors import WoodpeckerError
-from ._common import client, safe
+from ._common import DESTRUCTIVE, IDEMPOTENT_WRITE, READ_ONLY, WRITE, client, safe, tool
 
 
 def register(mcp: MCPServer) -> None:
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def search_repositories(
         query: str | None = None,
@@ -49,7 +49,7 @@ def register(mcp: MCPServer) -> None:
             "has_more": start + per_page < len(repos),
         }
 
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def get_repository(repo_id: int) -> dict[str, Any]:
         """Get a single repository by its internal Woodpecker ID.
@@ -71,7 +71,7 @@ def register(mcp: MCPServer) -> None:
         except WoodpeckerError as e:
             raise ToolError(e.message) from e
 
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def get_repository_by_name(repo_full_name: str) -> dict[str, Any]:
         """Look up a repository by its full name/slug.
@@ -92,7 +92,7 @@ def register(mcp: MCPServer) -> None:
         except WoodpeckerError as e:
             raise ToolError(e.message) from e
 
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def list_branches(repo_id: int) -> dict[str, Any]:
         """List branches of a repository.
@@ -110,7 +110,7 @@ def register(mcp: MCPServer) -> None:
         data = await client().get_json(f"/repos/{repo_id}/branches")
         return {"branches": data if isinstance(data, list) else []}
 
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def list_pull_requests(repo_id: int) -> dict[str, Any]:
         """List active pull requests of a repository.
@@ -127,7 +127,7 @@ def register(mcp: MCPServer) -> None:
         data = await client().get_json(f"/repos/{repo_id}/pull_requests")
         return {"pull_requests": data if isinstance(data, list) else []}
 
-    @mcp.tool()
+    @tool(mcp, annotations=IDEMPOTENT_WRITE)
     @safe
     async def repair_repository(repo_id: int) -> dict[str, Any]:
         """Repair a repository by re-syncing its webhook and configuration.
@@ -146,7 +146,7 @@ def register(mcp: MCPServer) -> None:
         """
         return await client().post_json(f"/repos/{repo_id}/repair")
 
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def get_repo_permissions(repo_id: int) -> dict[str, Any]:
         """Check the current authenticated user's access to a repository.
@@ -164,7 +164,7 @@ def register(mcp: MCPServer) -> None:
         """
         return await client().get_json(f"/repos/{repo_id}/permissions")
 
-    @mcp.tool()
+    @tool(mcp, annotations=WRITE)
     @safe
     async def activate_repository(forge_remote_id: str) -> dict[str, Any]:
         """Activate a repository for the currently authenticated user.
@@ -186,7 +186,7 @@ def register(mcp: MCPServer) -> None:
         """
         return await client().post_json("/repos", params={"forge_remote_id": forge_remote_id})
 
-    @mcp.tool()
+    @tool(mcp, annotations=DESTRUCTIVE)
     @safe
     async def deactivate_repository(repo_id: int) -> dict[str, Any]:
         """Deactivate a repository, removing it from Woodpecker.

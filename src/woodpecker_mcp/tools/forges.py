@@ -4,11 +4,11 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from ._common import client, safe
+from ._common import READ_ONLY, client, safe, tool
 
 
 def register(mcp: MCPServer) -> None:
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
     @safe
     async def list_forges(
         page: int = 1,
