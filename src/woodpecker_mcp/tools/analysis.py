@@ -136,12 +136,46 @@ def register(mcp: MCPServer) -> None:
         config_files = [
             lint_config(f.get("name", ""), decode_b64(f.get("data", ""))) for f in raw_files
         ]
-        errors = sum(1 for cf in config_files for f in cf["findings"] if f["severity"] == "error")
-        warnings = sum(1 for cf in config_files for f in cf["findings"] if f["severity"] == "warn")
         return {
             "config_files": config_files,
-            "summary": {"files": len(config_files), "errors": errors, "warnings": warnings},
+            "summary": _summarize_config_files(config_files),
         }
+
+    @tool(mcp, annotations=READ_ONLY)
+    @safe
+    async def review_pipeline_config_content(
+        config_yaml: str,
+        name: str = ".woodpecker.yml",
+    ) -> dict[str, Any]:
+        """Lint a Woodpecker config supplied directly as YAML.
+
+        Runs the same deterministic checks as review_pipeline_config, but does
+        not require an existing pipeline. Useful for reviewing a local
+        .woodpecker.yml before pushing.
+
+        Args:
+            config_yaml: The raw YAML content of the config file.
+            name: A display name for the config file (default '.woodpecker.yml').
+
+        Returns:
+            Dict with 'config_files' (a one-item list with 'name' and 'findings')
+            and 'summary' ({files, errors, warnings}).
+
+        Related tools:
+            - review_pipeline_config: Lint the config used by an existing pipeline.
+            - get_pipeline_config: Fetch decoded config files for a pipeline.
+        """
+        config_files = [lint_config(name, config_yaml)]
+        return {
+            "config_files": config_files,
+            "summary": _summarize_config_files(config_files),
+        }
+
+
+def _summarize_config_files(config_files: list[dict[str, Any]]) -> dict[str, int]:
+    errors = sum(1 for cf in config_files for f in cf["findings"] if f["severity"] == "error")
+    warnings = sum(1 for cf in config_files for f in cf["findings"] if f["severity"] == "warn")
+    return {"files": len(config_files), "errors": errors, "warnings": warnings}
 
 
 async def _find_latest_failure(c: Any, repo_id: int) -> int | None:

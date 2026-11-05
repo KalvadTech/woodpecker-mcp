@@ -328,6 +328,26 @@ async def test_review_pipeline_config_parse_error(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_review_pipeline_config_content(mcp):
+    result = await call(
+        mcp,
+        "review_pipeline_config_content",
+        config_yaml="""
+steps:
+  - name: build
+    image: node:latest
+    when:
+      event: pushh
+""",
+    )
+
+    assert result["summary"] == {"files": 1, "errors": 1, "warnings": 1}
+    rules = {f["rule"] for f in result["config_files"][0]["findings"]}
+    assert "invalid-when-event" in rules
+    assert "unpinned-image" in rules
+
+
+@pytest.mark.asyncio
 async def test_explain_pipeline_not_found(mcp, bound_client):
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/999").respond(404)

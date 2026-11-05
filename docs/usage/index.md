@@ -14,8 +14,8 @@ endpoint and send your Woodpecker personal access token as
 | Category | Tools |
 |---|---|
 | **Repositories** | `search_repositories`, `get_repository`, `get_repository_by_name`, `list_branches`, `list_pull_requests`, `repair_repository`, `activate_repository`, `deactivate_repository`, `get_repo_permissions` |
-| **Pipelines** | `list_pipelines`, `get_pipeline`, `trigger_pipeline`, `restart_pipeline`, `cancel_pipeline`, `approve_pipeline`, `decline_pipeline`, `get_pipeline_config`, `get_pipeline_metadata`, `rerun_last_failed` |
-| **Analysis** | `explain_pipeline_failure`, `review_pipeline_config` |
+| **Pipelines** | `list_pipelines`, `get_pipeline`, `trigger_pipeline`, `restart_pipeline`, `cancel_pipeline`, `approve_pipeline`, `decline_pipeline`, `get_pipeline_config`, `get_pipeline_metadata`, `list_workflows`, `rerun_last_failed` |
+| **Analysis** | `explain_pipeline_failure`, `review_pipeline_config`, `review_pipeline_config_content` |
 | **Logs** | `get_step_logs`, `list_pipeline_steps`, `summarize_logs`, `download_step_logs` |
 | **Cron** | `list_cron_jobs`, `get_cron_job`, `create_cron_job`, `delete_cron_job`, `trigger_cron_job` |
 | **Secrets** | `list_repo_secrets`, `get_repo_secret`, `create_repo_secret`, `delete_repo_secret` |
@@ -26,7 +26,7 @@ endpoint and send your Woodpecker personal access token as
 | **Forges** | `list_forges` |
 | **URLs** | `open_woodpecker_url` |
 
-**Total: 51 tools**
+**Total: 53 tools**
 
 ## Examples
 
@@ -39,6 +39,7 @@ Questions you can ask your AI assistant when this MCP server is connected:
 | "Is a deployment running right now?" | `get_queue_info` |
 | "What's queued across all repos right now?" | `list_queued_pipelines` |
 | "What pipelines ran in the last hour?" | `get_user_feed` |
+| "What failed on main yesterday?" | `list_pipelines` |
 | "Show me the logs for pipeline #42 in repo X" | `summarize_logs` |
 | "Restart the last failed pipeline in repo Y" | `rerun_last_failed` |
 | "Create a nightly cron job on main" | `create_cron_job` |

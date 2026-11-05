@@ -14,15 +14,28 @@ def register(mcp: MCPServer) -> None:
         repo_id: int,
         page: int = 1,
         per_page: int = 50,
+        branch: str | None = None,
+        events: list[str] | None = None,
+        status: str | None = None,
+        ref: str | None = None,
+        before: str | None = None,
+        after: str | None = None,
     ) -> dict[str, Any]:
         """List pipelines of a repository.
 
         Returns a paginated list of pipelines, ordered by creation date (newest first).
+        Supports filtering by branch, event, status, ref, and time window.
 
         Args:
             repo_id: The internal Woodpecker repository ID.
             page: Page number (1-indexed).
             per_page: Items per page (default 50).
+            branch: Only return pipelines for this branch.
+            events: Only return pipelines for these events (e.g. ['push', 'pull_request']).
+            status: Only return pipelines with this status (e.g. 'failure', 'success').
+            ref: Only return pipelines whose ref contains this string.
+            before: Only return pipelines created before this RFC3339 timestamp.
+            after: Only return pipelines created after this RFC3339 timestamp.
 
         Returns:
             Dict with 'items' list of pipelines, each containing 'number', 'status',
@@ -34,7 +47,25 @@ def register(mcp: MCPServer) -> None:
             - get_pipeline: Get details of a specific pipeline.
             - trigger_pipeline: Create a new pipeline.
         """
-        return await client().paginate(f"/repos/{repo_id}/pipelines", page=page, per_page=per_page)
+        params: dict[str, Any] = {}
+        if branch:
+            params["branch"] = branch
+        if events:
+            params["event"] = ",".join(events)
+        if status:
+            params["status"] = status
+        if ref:
+            params["ref"] = ref
+        if before:
+            params["before"] = before
+        if after:
+            params["after"] = after
+        return await client().paginate(
+            f"/repos/{repo_id}/pipelines",
+            params=params or None,
+            page=page,
+            per_page=per_page,
+        )
 
     @tool(mcp, annotations=READ_ONLY)
     @safe
@@ -62,6 +93,8 @@ def register(mcp: MCPServer) -> None:
         repo_id: int,
         branch: str = "main",
         variables: dict[str, str] | None = None,
+        message: str | None = None,
+        workflow: str | None = None,
     ) -> dict[str, Any]:
         """Trigger a manual pipeline run for a repository.
 
@@ -73,6 +106,9 @@ def register(mcp: MCPServer) -> None:
             branch: Git branch to build (e.g. 'main', 'feature/x'). Defaults to 'main'.
             variables: Optional dict of pipeline variables to override
                        (e.g. {'DEPLOY_ENV': 'staging'}).
+            message: Optional message shown on the manual pipeline run.
+            workflow: Optional workflow name to run (plus its hard dependencies).
+                      Use list_workflows to discover names.
 
         Returns:
             The created pipeline object with 'number', 'status' (initially 'pending'),
@@ -81,10 +117,15 @@ def register(mcp: MCPServer) -> None:
         Related tools:
             - get_pipeline: Check status of the triggered pipeline.
             - list_pipelines: See all recent pipelines.
+            - list_workflows: Discover workflow names for this branch.
         """
         body: dict[str, Any] = {"branch": branch}
         if variables:
             body["variables"] = variables
+        if message:
+            body["message"] = message
+        if workflow:
+            body["workflow"] = workflow
         return await client().post_json(f"/repos/{repo_id}/pipelines", json=body)
 
     @tool(mcp, annotations=WRITE)
@@ -222,6 +263,32 @@ def register(mcp: MCPServer) -> None:
             - get_pipeline_config: Get the configuration files for this pipeline.
         """
         return await client().get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}/metadata")
+
+    @tool(mcp, annotations=READ_ONLY)
+    @safe
+    async def list_workflows(repo_id: int, branch: str | None = None) -> dict[str, Any]:
+        """List the workflows a manual pipeline would run for a branch.
+
+        Fetches the pipeline config at the branch head and lists the workflows
+        that run on the manual event. Requires push rights. Use this to discover
+        the `workflow` value accepted by trigger_pipeline.
+
+        Args:
+            repo_id: The internal Woodpecker repository ID.
+            branch: Branch to inspect. Defaults to the repository's default branch.
+
+        Returns:
+            Dict with 'workflows' list, each containing 'name' and optional
+            'depends_on'.
+
+        Related tools:
+            - trigger_pipeline: Run a specific workflow.
+            - get_pipeline: Inspect a pipeline that already ran.
+            - list_pipeline_steps: List steps of a pipeline that already ran.
+        """
+        params: dict[str, Any] | None = {"branch": branch} if branch else None
+        data = await client().get_json(f"/repos/{repo_id}/workflows", params=params)
+        return {"workflows": data if isinstance(data, list) else []}
 
     @tool(mcp, annotations=WRITE)
     @safe
