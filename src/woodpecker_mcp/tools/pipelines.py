@@ -4,7 +4,7 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from ._common import client, safe
+from ._common import client, decode_b64, safe
 
 
 def register(mcp: MCPServer) -> None:
@@ -181,15 +181,25 @@ def register(mcp: MCPServer) -> None:
             pipeline_number: The pipeline number (e.g. 42).
 
         Returns:
-            Dict with 'configs' list of configuration files, each with 'name' and 'data'
-            (base64-encoded YAML content).
+            Dict with 'configs' list of configuration files, each with 'name' and
+            'data' containing the decoded YAML content.
 
         Related tools:
             - get_pipeline: Get pipeline metadata without config.
+            - review_pipeline_config: Lint these configuration files.
             - explain_pipeline_failure: Analyze failures including config inspection.
         """
         data = await client().get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}/config")
-        return {"configs": data if isinstance(data, list) else []}
+        configs = (
+            [
+                {"name": item.get("name", ""), "data": decode_b64(item.get("data", ""))}
+                for item in data
+                if isinstance(item, dict)
+            ]
+            if isinstance(data, list)
+            else []
+        )
+        return {"configs": configs}
 
     @mcp.tool()
     @safe

@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
 from ..errors import WoodpeckerError
-from ._common import client, decode_b64, decode_log_entries, safe
+from ._common import client, decode_b64, decode_log_entries, safe, truncate_text
 from ._config_lint import lint_config
 
-_LOG_TRUNCATION_LIMIT = 200
+_LOG_HEAD_LINES = 100
+_LOG_TAIL_LINES = 100
+_LOG_MAX_CHARS = 20_000
+_MAX_LOG_FETCHES = 5
 
 
 def register(mcp: MCPServer) -> None:
@@ -54,7 +58,9 @@ def register(mcp: MCPServer) -> None:
 
         try:
             pipeline = await c.get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}")
-        except WoodpeckerError:
+        except WoodpeckerError as exc:
+            if exc.status != 404:
+                raise
             return {
                 "pipeline": {"number": pipeline_number},
                 "message": f"Pipeline #{pipeline_number} not found.",
@@ -69,7 +75,9 @@ def register(mcp: MCPServer) -> None:
 
         try:
             config_data = await c.get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}/config")
-        except WoodpeckerError:
+        except WoodpeckerError as exc:
+            if exc.status != 404:
+                raise
             config_data = []
         config_files = config_data if isinstance(config_data, list) else []
 
@@ -105,9 +113,9 @@ def register(mcp: MCPServer) -> None:
         """Lint the .woodpecker config files used by a pipeline.
 
         Runs deterministic, schema-aware checks: YAML validity, valid
-        when.event values, when blocks missing an event filter, unpinned image
-        tags, deprecated keys (secrets list, step group, platform), unknown
-        keys, and undeclared secret references in commands.
+        when.event values, empty when blocks, unpinned image tags, deprecated
+        keys (secrets list, step group, platform), unknown keys, and undeclared
+        secret references in commands.
 
         Args:
             repo_id: The internal Woodpecker repository ID.
@@ -137,11 +145,21 @@ def register(mcp: MCPServer) -> None:
 
 
 async def _find_latest_failure(c: Any, repo_id: int) -> int | None:
-    data = await c.paginate(f"/repos/{repo_id}/pipelines", page=1, per_page=50)
-    for p in data.get("items", []):
-        if p.get("status") in ("failure", "error"):
-            return p.get("number")
-    return None
+    candidates: list[dict[str, Any]] = []
+    for status in ("failure", "error"):
+        data = await c.paginate(
+            f"/repos/{repo_id}/pipelines",
+            params={"status": status},
+            page=1,
+            per_page=50,
+        )
+        items = data.get("items", [])
+        if isinstance(items, list):
+            candidates.extend(items)
+    if not candidates:
+        return None
+    latest = max(candidates, key=lambda p: p.get("number") or 0)
+    return latest.get("number")
 
 
 async def _process_workflows(
@@ -184,9 +202,9 @@ async def _process_steps(
     pipeline_number: int,
     children: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    steps_out: list[dict[str, Any]] = []
+    semaphore = asyncio.Semaphore(_MAX_LOG_FETCHES)
 
-    for child in children:
+    async def build_step(child: dict[str, Any]) -> dict[str, Any]:
         step_state = child.get("state", "")
         exit_code = child.get("exit_code")
 
@@ -207,11 +225,12 @@ async def _process_steps(
         if step_state in ("failure", "error") or (exit_code is not None and exit_code != 0):
             step_id = child.get("id")
             if step_id:
-                step_entry["logs"] = await _fetch_logs(c, repo_id, pipeline_number, step_id)
+                async with semaphore:
+                    step_entry["logs"] = await _fetch_logs(c, repo_id, pipeline_number, step_id)
 
-        steps_out.append(step_entry)
+        return step_entry
 
-    return steps_out
+    return await asyncio.gather(*(build_step(child) for child in children))
 
 
 async def _fetch_logs(
@@ -224,12 +243,18 @@ async def _fetch_logs(
     lines = data if isinstance(data, list) else []
     decoded = decode_log_entries(lines)
 
-    truncated = len(decoded) > _LOG_TRUNCATION_LIMIT
+    truncated = len(decoded) > _LOG_HEAD_LINES + _LOG_TAIL_LINES
     if truncated:
-        decoded = decoded[:_LOG_TRUNCATION_LIMIT]
+        omitted = len(decoded) - _LOG_HEAD_LINES - _LOG_TAIL_LINES
+        decoded = [
+            *decoded[:_LOG_HEAD_LINES],
+            f"... ({omitted} lines omitted) ...",
+            *decoded[-_LOG_TAIL_LINES:],
+        ]
 
+    text, chars_truncated = truncate_text("\n".join(decoded), max_chars=_LOG_MAX_CHARS, tail=True)
     return {
         "total_lines": len(lines),
-        "truncated": truncated,
-        "text": "\n".join(decoded),
+        "truncated": truncated or chars_truncated,
+        "text": text,
     }

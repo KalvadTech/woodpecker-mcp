@@ -135,8 +135,12 @@ async def test_explain_without_pipeline_number_finds_latest_failure(mcp, bound_c
     async with respx.mock:
         list_route = respx.get(
             f"{BASE_URL}{API_PREFIX}/repos/1/pipelines",
-            params={"page": 1, "perPage": 50},
+            params={"page": 1, "perPage": 50, "status": "failure"},
         ).respond(200, json=list_response)
+        error_route = respx.get(
+            f"{BASE_URL}{API_PREFIX}/repos/1/pipelines",
+            params={"page": 1, "perPage": 50, "status": "error"},
+        ).respond(200, json=[])
         pipeline_route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42").respond(
             200, json=pipeline
         )
@@ -146,26 +150,27 @@ async def test_explain_without_pipeline_number_finds_latest_failure(mcp, bound_c
         result = await call(mcp, "explain_pipeline_failure", repo_id=1)
 
         assert list_route.called
+        assert error_route.called
         assert pipeline_route.called
         assert result["pipeline"]["number"] == 42
 
 
 @pytest.mark.asyncio
 async def test_explain_no_failure_found(mcp, bound_client):
-    list_response = [
-        {"id": 1, "number": 1, "status": "success"},
-        {"id": 2, "number": 2, "status": "success"},
-    ]
-
     async with respx.mock:
-        route = respx.get(
+        failure_route = respx.get(
             f"{BASE_URL}{API_PREFIX}/repos/1/pipelines",
-            params={"page": 1, "perPage": 50},
-        ).respond(200, json=list_response)
+            params={"page": 1, "perPage": 50, "status": "failure"},
+        ).respond(200, json=[])
+        error_route = respx.get(
+            f"{BASE_URL}{API_PREFIX}/repos/1/pipelines",
+            params={"page": 1, "perPage": 50, "status": "error"},
+        ).respond(200, json=[])
 
         result = await call(mcp, "explain_pipeline_failure", repo_id=1)
 
-        assert route.called
+        assert failure_route.called
+        assert error_route.called
         assert result["message"] == "no failed pipelines found in this repository"
 
 
@@ -334,6 +339,17 @@ async def test_explain_pipeline_not_found(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_explain_pipeline_forbidden_is_not_reported_as_not_found(mcp, bound_client):
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/repos/1/pipelines/42").respond(403)
+
+        with pytest.raises(Exception, match="forbidden"):
+            await call(mcp, "explain_pipeline_failure", repo_id=1, pipeline_number=42)
+
+        assert route.called
+
+
+@pytest.mark.asyncio
 async def test_explain_empty_logs(mcp, bound_client):
     pipeline = _fake_pipeline()
     config = _fake_config()
@@ -358,7 +374,7 @@ async def test_explain_empty_logs(mcp, bound_client):
 async def test_explain_log_truncation(mcp, bound_client):
     pipeline = _fake_pipeline()
     config = _fake_config()
-    # Generate 250 log lines to exceed the 200 line limit
+    # Generate 250 log lines to exceed the 200 line head+tail budget
     log_lines = [f"Log line {i}: some output" for i in range(250)]
     logs = _fake_logs(log_lines)
 
@@ -379,11 +395,9 @@ async def test_explain_log_truncation(mcp, bound_client):
         assert step_logs["total_lines"] == 250
         # Verify truncation flag is set
         assert step_logs["truncated"] is True
-        # Verify text contains only first 200 lines
-        text_lines = step_logs["text"].split("\n")
-        assert len(text_lines) == 200
-        # Verify we have the first line but not lines beyond 200
+        # Verify the head and tail are both present
         assert "Log line 0" in step_logs["text"]
-        assert "Log line 199" in step_logs["text"]
-        assert "Log line 200" not in step_logs["text"]
-        assert "Log line 249" not in step_logs["text"]
+        assert "Log line 99" in step_logs["text"]
+        assert "Log line 150" in step_logs["text"]
+        assert "Log line 249" in step_logs["text"]
+        assert "lines omitted" in step_logs["text"]

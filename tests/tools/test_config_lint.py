@@ -54,13 +54,23 @@ steps:
     assert "invalid-when-event" in _rules(config)
 
 
-def test_when_without_event():
+def test_when_with_branch_filter_not_flagged():
     config = """
 steps:
   - name: deploy
     image: alpine
     when:
       branch: main
+"""
+    assert "when-without-event" not in _rules(config)
+
+
+def test_empty_when_block_flagged():
+    config = """
+steps:
+  - name: deploy
+    image: alpine
+    when: {}
 """
     assert "when-without-event" in _rules(config)
 
@@ -81,7 +91,13 @@ def test_unpinned_image_latest_and_floating():
 
 
 def test_pinned_images_not_flagged():
-    for image in ("node:24.19.0", "debian:12.9", "alpine@sha256:abc123"):
+    for image in (
+        "node:24.19.0",
+        "debian:12.9",
+        "node:v1.2.3",
+        "registry.example.com/team/app:1.2.3-alpine",
+        "alpine@sha256:abc123",
+    ):
         config = f"steps:\n  - name: build\n    image: {image}"
         assert "unpinned-image" not in _rules(config), image
 
@@ -169,3 +185,35 @@ stps:
     image: alpine
 """
     assert "unknown-pipeline-key" in _rules(config)
+
+
+def test_valid_v3_pipeline_keys_not_flagged():
+    config = """
+when:
+  event: push
+workspace:
+  base: /woodpecker
+services:
+  - name: db
+    image: postgres:16.4
+matrix:
+  GO_VERSION:
+    - 1.23.0
+steps:
+  - name: build
+    image: alpine
+"""
+    assert "unknown-pipeline-key" not in _rules(config)
+
+
+def test_valid_v3_step_keys_not_flagged():
+    config = """
+steps:
+  - name: build
+    image: alpine
+    entrypoint: /bin/sh
+    backend_options:
+      kubernetes:
+        resources: {}
+"""
+    assert "unknown-step-key" not in _rules(config)

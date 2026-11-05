@@ -1,10 +1,22 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from ._common import client, decode_log_entries, safe
+from ._common import (
+    client,
+    decode_log_entries,
+    safe,
+    strip_ansi,
+    truncate_text,
+)
+
+_DEFAULT_MAX_LINES = 500
+_DEFAULT_MAX_CHARS = 200_000
+_ERROR_RE = re.compile(r"\berror\b", re.IGNORECASE)
+_WARNING_RE = re.compile(r"\bwarning\b", re.IGNORECASE)
 
 
 def register(mcp: MCPServer) -> None:
@@ -14,10 +26,13 @@ def register(mcp: MCPServer) -> None:
         repo_id: int,
         pipeline_number: int,
         step_id: int,
+        max_lines: int | None = _DEFAULT_MAX_LINES,
+        max_chars: int | None = _DEFAULT_MAX_CHARS,
+        tail: bool = True,
     ) -> dict[str, Any]:
         """Get logs for a specific pipeline step.
 
-        Fetches the raw log output from a single step in a pipeline workflow.
+        Fetches the decoded log output from a single step in a pipeline workflow.
 
         Args:
             repo_id: The internal Woodpecker repository ID.
@@ -25,10 +40,16 @@ def register(mcp: MCPServer) -> None:
             step_id: The step's database ID (the `id` field returned by
                      list_pipeline_steps). Note that `pid` is only the step's
                      display/order index and is not accepted here.
+            max_lines: Maximum lines to return. Defaults to 500; set to null for
+                       no line limit.
+            max_chars: Maximum characters to return. Defaults to 200000; set to
+                       null for no character limit.
+            tail: Keep the end of the log (where failures usually appear) when
+                  truncating. Set to false to keep the beginning.
 
         Returns:
-            Dict with 'logs' list of log entries and 'text' as a single string
-            with all log lines joined.
+            Dict with 'total_lines', 'returned_lines', 'truncated', and 'text'.
+            ANSI escape sequences are stripped from 'text'.
 
         Related tools:
             - list_pipeline_steps: Discover step IDs for a pipeline.
@@ -36,8 +57,14 @@ def register(mcp: MCPServer) -> None:
         """
         data = await client().get_json(f"/repos/{repo_id}/logs/{pipeline_number}/{step_id}")
         lines = data if isinstance(data, list) else []
-        decoded = decode_log_entries(lines)
-        return {"logs": lines, "text": "\n".join(decoded)}
+        text = "\n".join(decode_log_entries(lines))
+        text, truncated = truncate_text(text, max_lines=max_lines, max_chars=max_chars, tail=tail)
+        return {
+            "total_lines": len(lines),
+            "returned_lines": len(text.splitlines()),
+            "truncated": truncated,
+            "text": text,
+        }
 
     @mcp.tool()
     @safe
@@ -45,10 +72,13 @@ def register(mcp: MCPServer) -> None:
         repo_id: int,
         pipeline_number: int,
         step_id: int,
+        max_lines: int | None = _DEFAULT_MAX_LINES,
+        max_chars: int | None = _DEFAULT_MAX_CHARS,
+        tail: bool = True,
     ) -> dict[str, Any]:
         """Download the raw log output for a pipeline step.
 
-        Fetches the full plain-text log for a step, unlike get_step_logs which
+        Fetches the plain-text log for a step, unlike get_step_logs which
         returns structured JSON log entries.
 
         Args:
@@ -57,19 +87,33 @@ def register(mcp: MCPServer) -> None:
             step_id: The step's database ID (the `id` field returned by
                      list_pipeline_steps). Note that `pid` is only the step's
                      display/order index and is not accepted here.
+            max_lines: Maximum lines to return. Defaults to 500; set to null for
+                       no line limit.
+            max_chars: Maximum characters to return. Defaults to 200000; set to
+                       null for no character limit.
+            tail: Keep the end of the log (where failures usually appear) when
+                  truncating. Set to false to keep the beginning.
 
         Returns:
-            Dict with 'text' containing the raw log output.
+            Dict with 'total_lines', 'returned_lines', 'truncated', and 'text'.
+            ANSI escape sequences are stripped from 'text'.
 
         Related tools:
             - list_pipeline_steps: Discover step IDs for a pipeline.
             - get_step_logs: Get structured log entries instead.
             - summarize_logs: Get logs with error/warning counts.
         """
-        text = await client().get_text(
-            f"/repos/{repo_id}/logs/{pipeline_number}/{step_id}/download"
+        raw = await client().get_text(f"/repos/{repo_id}/logs/{pipeline_number}/{step_id}/download")
+        total_lines = len(raw.splitlines())
+        text, truncated = truncate_text(
+            strip_ansi(raw), max_lines=max_lines, max_chars=max_chars, tail=tail
         )
-        return {"text": text}
+        return {
+            "total_lines": total_lines,
+            "returned_lines": len(text.splitlines()),
+            "truncated": truncated,
+            "text": text,
+        }
 
     @mcp.tool()
     @safe
@@ -121,10 +165,14 @@ def register(mcp: MCPServer) -> None:
         repo_id: int,
         pipeline_number: int,
         step_id: int,
+        max_lines: int | None = _DEFAULT_MAX_LINES,
+        max_chars: int | None = _DEFAULT_MAX_CHARS,
+        tail: bool = True,
     ) -> dict[str, Any]:
         """Get logs for a pipeline step and return them as text with summary statistics.
 
-        Fetches logs and counts error/warning lines for quick analysis.
+        Fetches logs and counts error/warning lines for quick analysis. Counts
+        cover the full log, even when 'text' is truncated.
 
         Args:
             repo_id: The internal Woodpecker repository ID.
@@ -132,10 +180,17 @@ def register(mcp: MCPServer) -> None:
             step_id: The step's database ID (the `id` field returned by
                      list_pipeline_steps). Note that `pid` is only the step's
                      display/order index and is not accepted here.
+            max_lines: Maximum lines to return. Defaults to 500; set to null for
+                       no line limit.
+            max_chars: Maximum characters to return. Defaults to 200000; set to
+                       null for no character limit.
+            tail: Keep the end of the log (where failures usually appear) when
+                  truncating. Set to false to keep the beginning.
 
         Returns:
-            Dict with 'total_lines', 'error_lines' (count of lines containing 'error'),
-            'warning_lines' (count of lines containing 'warning'), and 'text' (all logs).
+            Dict with 'total_lines', 'returned_lines', 'error_lines' (count of
+            lines containing the word 'error'), 'warning_lines' (count of lines
+            containing the word 'warning'), 'truncated', and 'text'.
 
         Related tools:
             - get_step_logs: Get raw logs without statistics.
@@ -144,12 +199,16 @@ def register(mcp: MCPServer) -> None:
         data = await client().get_json(f"/repos/{repo_id}/logs/{pipeline_number}/{step_id}")
         lines = data if isinstance(data, list) else []
         decoded = decode_log_entries(lines)
-        text = "\n".join(decoded)
-        error_count = sum(1 for line in decoded if "error" in line.lower())
-        warning_count = sum(1 for line in decoded if "warning" in line.lower())
+        error_count = sum(1 for line in decoded if _ERROR_RE.search(line))
+        warning_count = sum(1 for line in decoded if _WARNING_RE.search(line))
+        text, truncated = truncate_text(
+            "\n".join(decoded), max_lines=max_lines, max_chars=max_chars, tail=tail
+        )
         return {
             "total_lines": len(lines),
+            "returned_lines": len(text.splitlines()),
             "error_lines": error_count,
             "warning_lines": warning_count,
+            "truncated": truncated,
             "text": text,
         }

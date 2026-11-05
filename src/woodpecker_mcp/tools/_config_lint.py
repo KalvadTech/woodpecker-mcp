@@ -30,10 +30,12 @@ STEP_KEYS = {
     "depends_on",
     "settings",
     "backend",
+    "backend_options",
     "privileged",
     "detach",
     "pull",
     "directory",
+    "entrypoint",
     "failure",
     "success",
     "status",
@@ -45,6 +47,9 @@ STEP_KEYS = {
 PIPELINE_KEYS = {
     "when",
     "steps",
+    "services",
+    "workspace",
+    "matrix",
     "depends_on",
     "skip_clone",
     "labels",
@@ -59,9 +64,24 @@ PIPELINE_KEYS = {
     "branches",
 }
 
+_WHEN_FILTER_KEYS = {
+    "event",
+    "repo",
+    "branch",
+    "cron",
+    "ref",
+    "status",
+    "platform",
+    "matrix",
+    "instance",
+    "path",
+    "evaluate",
+}
+
 _SECRET_REF_RE = re.compile(r"\$\{?([A-Z][A-Z0-9_]*)\}?")
 _SECRET_ISH = re.compile(r"(TOKEN|KEY|SECRET|PASSWORD)")
-_IMAGE_TAG_RE = re.compile(r"\d+(\.\d+)+")
+# Version-like tags (optionally v-prefixed) are considered pinned.
+_IMAGE_TAG_RE = re.compile(r"v?\d+(?:\.\d+)+(?:[-+][0-9A-Za-z.-]+)?")
 
 
 def lint_config(name: str, content: str) -> dict[str, Any]:
@@ -172,28 +192,32 @@ def _rule_when_without_event(doc: dict[str, Any]) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
     if doc.get("when") is not None:
         for when in _when_items(doc.get("when")):
-            if "event" not in when:
+            if not _when_has_filter(when):
                 findings.append(
                     {
                         "rule": "when-without-event",
                         "severity": "warn",
                         "location": "when",
-                        "message": "when block has no 'event' filter; runs on all events",
+                        "message": "when block has no filters; it runs for every event",
                     }
                 )
     for name, step in _iter_steps(doc):
         if step.get("when") is not None:
             for when in _when_items(step.get("when")):
-                if "event" not in when:
+                if not _when_has_filter(when):
                     findings.append(
                         {
                             "rule": "when-without-event",
                             "severity": "warn",
                             "location": f"steps.{name}.when",
-                            "message": "when block has no 'event' filter; runs on all events",
+                            "message": "when block has no filters; it runs for every event",
                         }
                     )
     return findings
+
+
+def _when_has_filter(when: dict[str, Any]) -> bool:
+    return any(key in _WHEN_FILTER_KEYS for key in when)
 
 
 def _is_pinned_image(image: Any) -> bool:

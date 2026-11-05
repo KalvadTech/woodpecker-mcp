@@ -12,8 +12,9 @@ Given a repository (and optionally a specific pipeline), it:
 1. Fetches the pipeline object (`get_pipeline`) - status, event, branch,
    author, commit, changed files, workflow/step states.
 2. Fetches the `.woodpecker` config files used by that run.
-3. For every **failed or errored** step, fetches its log and **truncates it**
-   (first 200 lines) so huge builds can't blow up the context.
+3. For every **failed or errored** step, fetches its log and keeps the **head and
+   tail** (100 lines each) so huge builds can't blow up the context while the
+   end-of-log failure is still visible.
 4. If no `pipeline_number` is given, it finds the most recent failed pipeline
    in the repository automatically.
 
