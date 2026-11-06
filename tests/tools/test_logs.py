@@ -77,7 +77,10 @@ async def test_list_pipeline_steps(mcp, bound_client):
         "id": 42,
         "workflows": [
             {
+                "id": 7,
+                "pid": 1,
                 "name": "build",
+                "state": "success",
                 "children": [
                     {
                         "id": 11,
@@ -114,6 +117,8 @@ async def test_list_pipeline_steps(mcp, bound_client):
         assert result["steps"][0]["name"] == "Build binary"
         assert result["steps"][1]["id"] == 12
         assert result["steps"][1]["name"] == "Run tests"
+        assert result["workflows"] == [{"id": 7, "pid": 1, "name": "build", "state": "success"}]
+        assert "children" not in result["workflows"][0]
 
 
 @pytest.mark.asyncio
