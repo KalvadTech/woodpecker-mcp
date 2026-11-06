@@ -70,18 +70,23 @@ async def _up(request: Request) -> PlainTextResponse:
     return PlainTextResponse("ok")
 
 
-def build_app(transport: httpx.AsyncBaseTransport | None = None) -> Starlette:
-    base_url = load_base_url()
+def build_app(
+    transport: httpx.AsyncBaseTransport | None = None,
+    *,
+    base_url: str | None = None,
+    transport_security: TransportSecuritySettings | None = None,
+) -> Starlette:
+    resolved_base_url = base_url or load_base_url()
     mcp = build_mcp()
     app: Starlette = mcp.streamable_http_app(
         stateless_http=True,
         json_response=True,
-        transport_security=_load_transport_security(),
+        transport_security=transport_security or _load_transport_security(),
     )
     app.routes.append(Route("/up", _up, methods=["GET"]))
     app.add_middleware(
         WoodpeckerAuthMiddleware,
-        base_url=base_url,
+        base_url=resolved_base_url,
         transport=transport,
     )
     return app
