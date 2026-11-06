@@ -134,8 +134,10 @@ def register(mcp: MCPServer) -> None:
 
         Returns:
             Dict with 'steps' list (each having 'workflow', 'id', 'pid', 'name',
-            'state', 'started', 'finished', 'exit_code') and 'workflows' list.
-            Use the step 'id' (not 'pid') with get_step_logs or summarize_logs.
+            'state', 'started', 'finished', 'exit_code') and a compact
+            'workflows' summary list (id, pid, name, state) without duplicating
+            the step children. Use the step 'id' (not 'pid') with get_step_logs
+            or summarize_logs.
 
         Related tools:
             - get_step_logs: Fetch logs for a specific step using its id.
@@ -144,8 +146,19 @@ def register(mcp: MCPServer) -> None:
         data = await client().get_json(f"/repos/{repo_id}/pipelines/{pipeline_number}")
         workflows = data.get("workflows", []) if isinstance(data, dict) else []
         steps = []
+        workflow_summary = []
         for wf in workflows:
+            if not isinstance(wf, dict):
+                continue
             wf_name = wf.get("name", "unknown")
+            workflow_summary.append(
+                {
+                    "id": wf.get("id"),
+                    "pid": wf.get("pid"),
+                    "name": wf_name,
+                    "state": wf.get("state", ""),
+                }
+            )
             for child in wf.get("children", []):
                 steps.append(
                     {
@@ -159,7 +172,7 @@ def register(mcp: MCPServer) -> None:
                         "exit_code": child.get("exit_code"),
                     }
                 )
-        return {"steps": steps, "workflows": workflows}
+        return {"steps": steps, "workflows": workflow_summary}
 
     @tool(mcp, annotations=READ_ONLY)
     @safe
