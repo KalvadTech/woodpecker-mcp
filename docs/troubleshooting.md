@@ -13,6 +13,9 @@ configured `WOODPECKER_SERVER`.
 The token is valid but does not have the required permission for the endpoint.
 Admin-gated tools (e.g. listing all users) need a token with admin rights.
 
+If the error is `Invalid Origin header`, the client sent an `Origin` that is not
+listed in `MCP_ALLOWED_ORIGINS`.
+
 ## "not found" (404)
 
 A repository, pipeline, or resource does not exist or is not visible to the
@@ -24,6 +27,10 @@ token in use. Double-check the `repo_id` / `pipeline_number` (use
 By default `MCP_ALLOWED_HOSTS` only allows `localhost`. When accessing the
 server from another host, set `MCP_ALLOWED_HOSTS` to that host (or `*` to
 disable the protection).
+
+If a client sends an `Origin` header, set `MCP_ALLOWED_ORIGINS` as well.
+Browser-based MCP clients are not supported because the server does not emit
+CORS headers.
 
 ## Pasted Woodpecker links don't resolve
 

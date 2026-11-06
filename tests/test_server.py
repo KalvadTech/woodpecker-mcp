@@ -129,6 +129,38 @@ async def test_host_allowlist_accepts_allowed_host():
     assert response.status_code == 200
 
 
+@pytest.mark.asyncio
+async def test_origin_allowlist_accepts_known_origin():
+    app = build_app(
+        base_url=BASE_URL,
+        transport_security=TransportSecuritySettings(
+            enable_dns_rebinding_protection=True,
+            allowed_hosts=["allowed.test", "allowed.test:*"],
+            allowed_origins=["https://app.test", "https://app.test:*"],
+        ),
+    )
+    headers = {**_auth_headers(), "origin": "https://app.test"}
+    async with _client(app, base_url="http://allowed.test") as client:
+        response = await client.post("/mcp", json=_INIT_REQUEST, headers=headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_origin_allowlist_rejects_unknown_origin():
+    app = build_app(
+        base_url=BASE_URL,
+        transport_security=TransportSecuritySettings(
+            enable_dns_rebinding_protection=True,
+            allowed_hosts=["allowed.test", "allowed.test:*"],
+            allowed_origins=["https://app.test", "https://app.test:*"],
+        ),
+    )
+    headers = {**_auth_headers(), "origin": "https://evil.test"}
+    async with _client(app, base_url="http://allowed.test") as client:
+        response = await client.post("/mcp", json=_INIT_REQUEST, headers=headers)
+    assert response.status_code == 403
+
+
 class TestLoadTransportSecurity:
     def test_unset_returns_none(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv("MCP_ALLOWED_HOSTS", raising=False)
@@ -151,3 +183,27 @@ class TestLoadTransportSecurity:
             "127.0.0.1",
             "127.0.0.1:*",
         ]
+
+    def test_origin_list_adds_wildcard_port(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setenv("MCP_ALLOWED_HOSTS", "ci.example.com")
+        monkeypatch.setenv("MCP_ALLOWED_ORIGINS", "https://app.example.com")
+        settings = _load_transport_security()
+        assert settings is not None
+        assert settings.allowed_origins == [
+            "https://app.example.com",
+            "https://app.example.com:*",
+        ]
+
+    def test_origins_without_hosts_use_local_defaults(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.delenv("MCP_ALLOWED_HOSTS", raising=False)
+        monkeypatch.setenv("MCP_ALLOWED_ORIGINS", "https://app.example.com")
+        settings = _load_transport_security()
+        assert settings is not None
+        assert "localhost" in settings.allowed_hosts
+        assert "https://app.example.com" in settings.allowed_origins
+
+    def test_wildcard_origin_is_rejected(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setenv("MCP_ALLOWED_HOSTS", "ci.example.com")
+        monkeypatch.setenv("MCP_ALLOWED_ORIGINS", "*")
+        with pytest.raises(RuntimeError, match="does not support"):
+            _load_transport_security()

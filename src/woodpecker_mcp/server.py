@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from urllib.parse import urlsplit
 
 import httpx
 from mcp.server.mcpserver import MCPServer
@@ -45,12 +46,17 @@ def build_mcp() -> MCPServer:
     return mcp
 
 
-def _load_transport_security() -> TransportSecuritySettings | None:
-    raw = os.environ.get("MCP_ALLOWED_HOSTS", "").strip()
-    if not raw:
-        return None
-    if raw == "*":
-        return TransportSecuritySettings(enable_dns_rebinding_protection=False)
+_DEFAULT_LOCAL_HOSTS = [
+    "localhost",
+    "localhost:*",
+    "127.0.0.1",
+    "127.0.0.1:*",
+    "[::1]",
+    "[::1]:*",
+]
+
+
+def _parse_hosts(raw: str) -> list[str]:
     hosts: list[str] = []
     for entry in raw.split(","):
         host = entry.strip()
@@ -59,9 +65,40 @@ def _load_transport_security() -> TransportSecuritySettings | None:
         hosts.append(host)
         if ":" not in host:
             hosts.append(f"{host}:*")
+    return hosts
+
+
+def _parse_origins(raw: str) -> list[str]:
+    origins: list[str] = []
+    for entry in raw.split(","):
+        origin = entry.strip().rstrip("/")
+        if not origin:
+            continue
+        if origin == "*":
+            raise RuntimeError(
+                "MCP_ALLOWED_ORIGINS does not support '*'; list explicit origins instead"
+            )
+        origins.append(origin)
+        parsed = urlsplit(origin)
+        if parsed.scheme in ("http", "https") and parsed.port is None:
+            origins.append(f"{origin}:*")
+    return origins
+
+
+def _load_transport_security() -> TransportSecuritySettings | None:
+    hosts_raw = os.environ.get("MCP_ALLOWED_HOSTS", "").strip()
+    origins_raw = os.environ.get("MCP_ALLOWED_ORIGINS", "").strip()
+    if not hosts_raw and not origins_raw:
+        return None
+    if hosts_raw == "*":
+        return TransportSecuritySettings(enable_dns_rebinding_protection=False)
+
+    hosts = _parse_hosts(hosts_raw) or list(_DEFAULT_LOCAL_HOSTS)
+    origins = _parse_origins(origins_raw)
     return TransportSecuritySettings(
         enable_dns_rebinding_protection=True,
         allowed_hosts=hosts,
+        allowed_origins=origins,
     )
 
 

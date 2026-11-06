@@ -40,17 +40,26 @@ def register(mcp: MCPServer) -> None:
         repo_id: int,
         name: str,
         value: str,
+        events: list[str] | None = None,
+        images: list[str] | None = None,
     ) -> dict[str, Any]:
         """Create a new secret for a repository.
 
         Secrets are encrypted environment variables available to pipeline steps.
         The secret value is stored securely and not returned by list operations.
 
+        Security note: the plaintext `value` is passed to this tool and therefore
+        enters the model's context. Prefer creating sensitive secrets outside
+        the MCP server when possible, and use a least-privilege token.
+
         Args:
             repo_id: The internal Woodpecker repository ID.
             name: Secret name, must be uppercase with underscores (e.g. 'MY_SECRET',
                   'DEPLOY_TOKEN'). Will be available as environment variable in pipelines.
             value: The secret value to encrypt and store.
+            events: Optional list of events the secret is available to
+                    (e.g. ['push', 'tag']). If omitted, the server default is used.
+            images: Optional list of image patterns the secret is available to.
 
         Returns:
             The created secret object with 'name' (value is not returned).
@@ -60,6 +69,10 @@ def register(mcp: MCPServer) -> None:
             - delete_repo_secret: Remove a secret.
         """
         body: dict[str, Any] = {"name": name, "value": value}
+        if events is not None:
+            body["events"] = events
+        if images is not None:
+            body["images"] = images
         return await client().post_json(f"/repos/{repo_id}/secrets", json=body)
 
     @tool(mcp, annotations=READ_ONLY)
