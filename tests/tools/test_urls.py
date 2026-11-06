@@ -1,7 +1,8 @@
 import pytest
 import respx
 
-from tests.conftest import BASE_URL, call
+from tests.conftest import API_TOKEN, BASE_URL, call
+from woodpecker_mcp.client import WoodpeckerClient, reset_current_client, set_current_client
 
 API_PREFIX = "/api"
 
@@ -63,6 +64,62 @@ async def test_open_repo_url(mcp, bound_client):
         assert route.called
         assert "testuser/repo-one" in result
         assert "private" in result
+
+
+@pytest.mark.asyncio
+async def test_open_url_with_server_path_prefix(mcp):
+    fake_repo = {
+        "full_name": "testuser/repo-one",
+        "forge_url": "https://github.com/testuser/repo-one",
+        "default_branch": "main",
+        "visibility": "private",
+        "active": True,
+        "timeout": 60,
+    }
+    client = WoodpeckerClient(f"{BASE_URL}/woodpecker", API_TOKEN)
+    token = set_current_client(client)
+    try:
+        async with respx.mock:
+            route = respx.get(f"{BASE_URL}/woodpecker{API_PREFIX}/repos/1").respond(
+                200, json=fake_repo
+            )
+            raw = await call(
+                mcp,
+                "open_woodpecker_url",
+                url=f"{BASE_URL}/woodpecker/repos/1",
+            )
+            result = raw["result"] if isinstance(raw, dict) else raw
+            assert route.called
+            assert "testuser/repo-one" in result
+    finally:
+        reset_current_client(token)
+        await client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_open_url_outside_server_path_prefix(mcp):
+    client = WoodpeckerClient(f"{BASE_URL}/woodpecker", API_TOKEN)
+    token = set_current_client(client)
+    try:
+        raw = await call(mcp, "open_woodpecker_url", url=f"{BASE_URL}/repos/1")
+        result = raw["result"] if isinstance(raw, dict) else raw
+        assert "does not belong to the configured" in result
+    finally:
+        reset_current_client(token)
+        await client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_open_url_is_server_path_only(mcp):
+    client = WoodpeckerClient(f"{BASE_URL}/woodpecker", API_TOKEN)
+    token = set_current_client(client)
+    try:
+        raw = await call(mcp, "open_woodpecker_url", url=f"{BASE_URL}/woodpecker")
+        result = raw["result"] if isinstance(raw, dict) else raw
+        assert "Unsupported Woodpecker URL" in result
+    finally:
+        reset_current_client(token)
+        await client.aclose()
 
 
 @pytest.mark.asyncio

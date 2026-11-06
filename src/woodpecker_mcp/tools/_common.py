@@ -7,6 +7,7 @@ import re
 from functools import wraps
 from typing import Any
 
+import httpx
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
@@ -53,12 +54,12 @@ def client() -> Any:
 
 
 def safe(fn: Any) -> Any:
-    """Convert WoodpeckerError into a clean MCP ToolError.
+    """Convert Woodpecker and network errors into clean MCP ToolErrors.
 
     Woodpecker API failures (401/403/404/5xx) otherwise bubble up as opaque
     'unexpected exception' tool errors whose real message never reaches the
-    client. This wrapper re-raises them as ToolError so the model gets an
-    actionable message instead.
+    client. Network failures have the same problem. This wrapper re-raises both
+    as ToolError so the model gets an actionable message instead.
     """
 
     @wraps(fn)
@@ -67,8 +68,20 @@ def safe(fn: Any) -> Any:
             return await fn(*args, **kwargs)
         except WoodpeckerError as e:
             raise ToolError(e.message) from e
+        except httpx.HTTPError as e:
+            raise ToolError(_http_error_message(e)) from e
 
     return wrapper
+
+
+def _http_error_message(exc: httpx.HTTPError) -> str:
+    try:
+        target = get_woodpecker_client().base_url
+    except RuntimeError:
+        target = "Woodpecker"
+    detail = str(exc).strip()
+    suffix = f": {detail}" if detail else ""
+    return f"could not reach {target}: {type(exc).__name__}{suffix}"
 
 
 def decode_b64(text: str) -> str:

@@ -20,6 +20,7 @@ make install
 |---|---|---|---|
 | `WOODPECKER_SERVER` | Yes | - | Your Woodpecker server URL (e.g. `https://ci.example.com`) |
 | `MCP_ALLOWED_HOSTS` | No | `localhost` | DNS-rebinding protection allowlist (`*` to disable) |
+| `MCP_ALLOWED_ORIGINS` | No | - | Comma-separated allowed `Origin` values for clients that send one |
 | `MCP_READ_ONLY` | No | `false` | Set to `true` to hide all write and destructive tools |
 
 Authentication is handled per-request via the `Authorization: Bearer <token>`

@@ -37,6 +37,31 @@ async def test_create_repo_secret(mcp, bound_client):
 
 
 @pytest.mark.asyncio
+async def test_create_repo_secret_with_scope(mcp, bound_client):
+    async with respx.mock:
+        route = respx.post(
+            f"{BASE_URL}{API_PREFIX}/repos/1/secrets",
+            json={
+                "name": "DEPLOY_TOKEN",
+                "value": "supersecret",
+                "events": ["push", "tag"],
+                "images": ["alpine:*"],
+            },
+        ).respond(200, json={"name": "DEPLOY_TOKEN"})
+        result = await call(
+            mcp,
+            "create_repo_secret",
+            repo_id=1,
+            name="DEPLOY_TOKEN",
+            value="supersecret",
+            events=["push", "tag"],
+            images=["alpine:*"],
+        )
+        assert route.called
+        assert result["name"] == "DEPLOY_TOKEN"
+
+
+@pytest.mark.asyncio
 async def test_get_repo_secret(mcp, bound_client):
     fake_secret = {"id": 1, "name": "MY_SECRET", "events": ["push", "pull_request"]}
     async with respx.mock:

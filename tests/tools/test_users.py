@@ -79,3 +79,30 @@ async def test_get_user_feed(mcp, bound_client):
         result = await call(mcp, "get_user_feed")
         assert route.called
         assert result["items"] == fake_feed
+        assert result["page"] == 1
+        assert result["has_more"] is False
+
+
+@pytest.mark.asyncio
+async def test_get_user_feed_latest(mcp, bound_client):
+    fake_feed = [{"id": 42, "status": "success", "repo_id": 1}]
+    async with respx.mock:
+        route = respx.get(
+            f"{BASE_URL}{API_PREFIX}/user/feed",
+            params={"latest": "true"},
+        ).respond(200, json=fake_feed)
+        result = await call(mcp, "get_user_feed", latest=True)
+        assert route.called
+        assert result["items"] == fake_feed
+
+
+@pytest.mark.asyncio
+async def test_get_user_feed_client_side_pagination(mcp, bound_client):
+    fake_feed = [{"id": i} for i in range(3)]
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/user/feed").respond(200, json=fake_feed)
+        result = await call(mcp, "get_user_feed", page=2, per_page=2)
+        assert route.called
+        assert result["items"] == [{"id": 2}]
+        assert result["per_page"] == 2
+        assert result["has_more"] is False

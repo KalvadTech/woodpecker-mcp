@@ -3,10 +3,8 @@ from __future__ import annotations
 from typing import Any
 
 from mcp.server.mcpserver import MCPServer
-from mcp.server.mcpserver.exceptions import ToolError
 
 from ..client import _MAX_PER_PAGE
-from ..errors import WoodpeckerError
 from ._common import DESTRUCTIVE, IDEMPOTENT_WRITE, READ_ONLY, WRITE, client, safe, tool
 
 
@@ -66,10 +64,7 @@ def register(mcp: MCPServer) -> None:
             - search_repositories: Find repositories by name.
             - list_branches: List branches for this repository.
         """
-        try:
-            return await client().get_json(f"/repos/{repo_id}")
-        except WoodpeckerError as e:
-            raise ToolError(e.message) from e
+        return await client().get_json(f"/repos/{repo_id}")
 
     @tool(mcp, annotations=READ_ONLY)
     @safe
@@ -87,10 +82,7 @@ def register(mcp: MCPServer) -> None:
             - search_repositories: Find repositories by name.
             - get_repository: Get a repository by internal ID.
         """
-        try:
-            return await client().get_json(f"/repos/lookup/{repo_full_name}")
-        except WoodpeckerError as e:
-            raise ToolError(e.message) from e
+        return await client().get_json(f"/repos/lookup/{repo_full_name}")
 
     @tool(mcp, annotations=READ_ONLY)
     @safe
@@ -139,12 +131,13 @@ def register(mcp: MCPServer) -> None:
             repo_id: The internal Woodpecker repository ID.
 
         Returns:
-            Confirmation of repair action.
+            Dict with 'repaired': True on success.
 
         Related tools:
             - get_repository: Check repository status before/after repair.
         """
-        return await client().post_json(f"/repos/{repo_id}/repair")
+        await client().post_json(f"/repos/{repo_id}/repair")
+        return {"repaired": True}
 
     @tool(mcp, annotations=READ_ONLY)
     @safe

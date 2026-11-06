@@ -5,6 +5,8 @@ import logging
 import random
 from collections.abc import AsyncIterator
 from contextvars import ContextVar, Token
+from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from types import TracebackType
 from typing import Any
 
@@ -194,10 +196,9 @@ class WoodpeckerClient:
             Delay in seconds
         """
         if retry_after:
-            try:
-                return float(retry_after)
-            except ValueError:
-                pass
+            parsed = _parse_retry_after(retry_after)
+            if parsed is not None:
+                return min(parsed, self._retry_backoff_max)
 
         delay = self._retry_backoff_base * (2**attempt)
         delay += random.random()
@@ -381,12 +382,30 @@ def _clean_params(params: dict[str, Any] | None) -> dict[str, Any] | None:
     return {k: v for k, v in params.items() if v is not None}
 
 
+def _parse_retry_after(value: str) -> float | None:
+    """Parse a Retry-After value in seconds or HTTP-date form."""
+    try:
+        return max(0.0, float(value))
+    except ValueError:
+        pass
+    try:
+        retry_at = parsedate_to_datetime(value)
+    except TypeError, ValueError:
+        return None
+    if retry_at is None:
+        return None
+    if retry_at.tzinfo is None:
+        retry_at = retry_at.replace(tzinfo=UTC)
+    return max(0.0, (retry_at - datetime.now(UTC)).total_seconds())
+
+
 def _raise_for_status(resp: httpx.Response) -> None:
     if resp.is_success:
         return
     status = resp.status_code
     body: Any = None
     errors: list[str] = []
+    server_message: str | None = None
     message = resp.reason_phrase or "request failed"
     try:
         body = resp.json()
@@ -396,15 +415,23 @@ def _raise_for_status(resp: httpx.Response) -> None:
         raw = body.get("errors")
         if isinstance(raw, list):
             errors = [str(e) for e in raw]
-            if errors and not message:
-                message = errors[0]
         raw_msg = body.get("message")
         if raw_msg:
-            message = str(raw_msg)
+            server_message = str(raw_msg)
+
+    if server_message:
+        message = server_message
+    elif errors:
+        message = errors[0]
+    if errors:
+        extras = [e for e in errors if e != message]
+        if extras:
+            message = f"{message}: {'; '.join(extras)}"
+
     if status == 401:
         message = "invalid Woodpecker API token or unauthorized"
     elif status == 403:
-        message = errors[0] if errors else "forbidden"
+        message = "; ".join(errors) if errors else "forbidden"
     elif status == 404:
         message = "not found"
     raise WoodpeckerError(status, message, errors=errors, body=body)
