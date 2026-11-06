@@ -17,6 +17,7 @@ def register(mcp: MCPServer) -> None:
         """List all registered agents.
 
         Agents are worker nodes that execute pipeline steps.
+        Requires admin rights.
 
         Args:
             page: Page number (1-indexed).
@@ -38,6 +39,8 @@ def register(mcp: MCPServer) -> None:
     async def get_agent(agent_id: int) -> dict[str, Any]:
         """Get a single agent by its id.
 
+        Requires admin rights.
+
         Args:
             agent_id: The agent ID.
 
@@ -57,6 +60,7 @@ def register(mcp: MCPServer) -> None:
         """List tasks assigned to an agent.
 
         Shows the pipeline steps currently being executed or queued for this agent.
+        Requires admin rights.
 
         Args:
             agent_id: The agent ID.

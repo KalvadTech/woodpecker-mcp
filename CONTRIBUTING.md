@@ -52,7 +52,7 @@ make run
 
 ### Running Checks
 ```bash
-make check  # Runs lint + format + typecheck + test
+make check  # Runs lint + format check + typecheck + test
 ```
 
 ## Commit Messages
@@ -114,23 +114,36 @@ tests/
 
 1. Create `src/woodpecker_mcp/tools/<name>.py`
 2. Implement `register(mcp: MCPServer)` function
-3. Add tool functions with `@mcp.tool()` decorator
+3. Add tool functions with `@tool(mcp, annotations=...)` and `@safe`
 4. Add tests in `tests/tools/test_<name>.py`
 5. Register in `src/woodpecker_mcp/tools/__init__.py`
+6. Update the tool tables in `README.md` and `docs/usage/index.md`
+
+Annotations:
+
+- `READ_ONLY` for list/get/query tools
+- `WRITE` for non-destructive mutations
+- `DESTRUCTIVE` for deletes, cancels, and deactivations
+- `IDEMPOTENT_WRITE` for repeated-safe mutations such as repair
 
 ### Tool Template
 ```python
 from __future__ import annotations
 from typing import Any
 from mcp.server.mcpserver import MCPServer
-from ._common import client
+from ._common import READ_ONLY, client, safe, tool
 
 def register(mcp: MCPServer) -> None:
-    @mcp.tool()
+    @tool(mcp, annotations=READ_ONLY)
+    @safe
     async def my_tool(param: int) -> dict[str, Any]:
         """Brief description of what the tool does."""
         return await client().get_json(f"/endpoint/{param}")
 ```
+
+`@safe` converts Woodpecker and network failures into model-readable
+`ToolError`s. Read-only tools are automatically hidden when
+`MCP_READ_ONLY=true`.
 
 ## Review Process
 
