@@ -9,10 +9,10 @@ docker run --rm -p 8080:8080 \
   ghcr.io/kalvadtech/woodpecker-mcp:latest
 ```
 
-The image is multi-stage Alpine, runs as a non-root user, and exposes port
-8080. Set `MCP_ALLOWED_HOSTS` to the host you access the server from if it is
-not `localhost` (use `*` only when you accept disabling DNS-rebinding
-protection).
+The image is multi-stage Alpine, runs as a non-root user, binds to
+`0.0.0.0:8080` inside the container, and includes a `/up` healthcheck. Set
+`MCP_ALLOWED_HOSTS` to the host you access the server from if it is not
+`localhost` (use `*` only when you accept disabling DNS-rebinding protection).
 
 ## TLS and reverse proxies
 
