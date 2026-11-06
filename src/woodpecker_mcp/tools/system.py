@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import httpx
 from mcp.server.mcpserver import MCPServer
 
 from ._common import READ_ONLY, client, safe, tool
@@ -16,16 +17,18 @@ def register(mcp: MCPServer) -> None:
         Checks if the Woodpecker server is healthy and responsive.
 
         Returns:
-            Dict with 'healthy' boolean (True if server is responsive, False otherwise).
+            Dict with 'healthy' boolean and, on network failure, an 'error'
+            string. Auth and server errors are surfaced as tool errors instead
+            of being reported as unhealthy.
 
         Related tools:
             - get_version: Get server version information.
         """
         try:
             await client().get_json("/healthz")
-            return {"healthy": True}
-        except Exception:
-            return {"healthy": False}
+        except httpx.TransportError as exc:
+            return {"healthy": False, "error": f"{type(exc).__name__}: {exc}"}
+        return {"healthy": True}
 
     @tool(mcp, annotations=READ_ONLY)
     @safe

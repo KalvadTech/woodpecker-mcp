@@ -4,6 +4,7 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
+from ..client import _MAX_PER_PAGE
 from ._common import READ_ONLY, client, safe, tool
 
 
@@ -79,14 +80,18 @@ def register(mcp: MCPServer) -> None:
     async def get_user_feed(
         page: int = 1,
         per_page: int = 50,
+        latest: bool = False,
     ) -> dict[str, Any]:
         """Get the pipeline feed for the currently authenticated user.
 
         Returns recent pipelines from repositories the user has access to.
+        Woodpecker returns the full feed in one response, so pagination is
+        applied client-side.
 
         Args:
             page: Page number (1-indexed).
-            per_page: Items per page (default 50).
+            per_page: Items per page (default 50, max 50).
+            latest: When true, return only the latest pipeline per repository.
 
         Returns:
             Dict with 'items' list of pipelines, each containing 'repo_id', 'number',
@@ -97,4 +102,15 @@ def register(mcp: MCPServer) -> None:
             - get_current_user: Get user details.
             - list_pipelines: List pipelines for a specific repository.
         """
-        return await client().paginate("/user/feed", page=page, per_page=per_page)
+        params: dict[str, Any] | None = {"latest": True} if latest else None
+        data = await client().get_json("/user/feed", params=params)
+        feed = data if isinstance(data, list) else []
+        page = max(1, page)
+        per_page = max(1, min(per_page, _MAX_PER_PAGE))
+        start = (page - 1) * per_page
+        return {
+            "items": feed[start : start + per_page],
+            "page": page,
+            "per_page": per_page,
+            "has_more": start + per_page < len(feed),
+        }

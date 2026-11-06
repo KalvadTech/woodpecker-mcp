@@ -1,3 +1,4 @@
+import httpx
 import pytest
 import respx
 
@@ -17,6 +18,37 @@ async def test_get_version(mcp, bound_client):
         result = await call(mcp, "get_version")
         assert route.called
         assert result["version"] == "3.16.0"
+
+
+@pytest.mark.asyncio
+async def test_get_health(mcp, bound_client):
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/healthz").respond(204)
+        result = await call(mcp, "get_health")
+        assert route.called
+        assert result == {"healthy": True}
+
+
+@pytest.mark.asyncio
+async def test_get_health_network_error(mcp, bound_client):
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/healthz")
+        route.side_effect = httpx.ConnectError("connection refused")
+        result = await call(mcp, "get_health")
+        assert route.called
+        assert result["healthy"] is False
+        assert "ConnectError" in result["error"]
+
+
+@pytest.mark.asyncio
+async def test_get_health_server_error_surfaces(mcp, bound_client):
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/healthz").respond(
+            500, json={"message": "database down"}
+        )
+        with pytest.raises(Exception, match="database down"):
+            await call(mcp, "get_health")
+        assert route.called
 
 
 @pytest.mark.asyncio

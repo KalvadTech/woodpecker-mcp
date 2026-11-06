@@ -43,6 +43,17 @@ def register(mcp: MCPServer) -> None:
             )
 
         relative = parsed.path.rstrip("/")
+        base_path = base_parsed.path.rstrip("/")
+        if base_path:
+            if relative == base_path:
+                relative = "/"
+            elif relative.startswith(base_path + "/"):
+                relative = relative[len(base_path) :]
+            else:
+                return (
+                    f"The URL {url} does not belong to the configured Woodpecker "
+                    f"instance ({base_url})."
+                )
 
         if match := _PIPELINE_PATTERN.match(relative):
             data = await c.get_json(f"/repos/{match.group(1)}/pipelines/{match.group(2)}")

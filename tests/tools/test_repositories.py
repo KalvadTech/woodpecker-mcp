@@ -94,13 +94,10 @@ async def test_list_pull_requests(mcp, bound_client):
 @pytest.mark.asyncio
 async def test_repair_repository(mcp, bound_client):
     async with respx.mock:
-        route = respx.post(f"{BASE_URL}{API_PREFIX}/repos/1/repair").respond(
-            200,
-            json={"status": "ok"},
-        )
+        route = respx.post(f"{BASE_URL}{API_PREFIX}/repos/1/repair").respond(204)
         result = await call(mcp, "repair_repository", repo_id=1)
         assert route.called
-        assert result == {"status": "ok"}
+        assert result == {"repaired": True}
 
 
 @pytest.mark.asyncio
