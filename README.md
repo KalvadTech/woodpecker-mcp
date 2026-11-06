@@ -65,12 +65,15 @@ The server listens on `http://127.0.0.1:8080`.
       "type": "http",
       "url": "http://127.0.0.1:8080/mcp",
       "headers": {
-        "Authorization": "Bearer {env:WOODPECKER_TOKEN}"
+        "Authorization": "Bearer ${WOODPECKER_TOKEN}"
       }
     }
   }
 }
 ```
+
+Claude Code uses `${VAR}` expansion. The opencode example below uses its
+own `{env:VAR}` syntax.
 
 ### opencode
 
@@ -116,6 +119,10 @@ Point your MCP client to the Streamable HTTP endpoint (`http://localhost:8080/mc
 | **URLs** | `open_woodpecker_url` |
 
 **Total: 53 tools**
+
+Some tools require admin, push, or repository-admin permissions. See the
+[required permissions](https://kalvadtech.github.io/woodpecker-mcp/usage/#required-permissions)
+table in the usage guide.
 
 ## Resources
 

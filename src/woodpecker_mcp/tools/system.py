@@ -49,7 +49,7 @@ def register(mcp: MCPServer) -> None:
         """List pipelines currently in the queue.
 
         Returns the feed of pipelines waiting to be executed or running
-        across all repositories.
+        across all repositories. Requires admin rights.
 
         Returns:
             Dict with 'items' list of queued pipeline entries, each containing

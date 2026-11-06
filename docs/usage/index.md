@@ -28,6 +28,21 @@ endpoint and send your Woodpecker personal access token as
 
 **Total: 53 tools**
 
+## Required permissions
+
+Most read tools work with any token that can see the repository. These tools
+need additional Woodpecker permissions:
+
+| Permission | Tools |
+|---|---|
+| **Admin** | `list_users`, `list_organizations`, `list_queued_pipelines`, `get_queue_info`, `list_agents`, `get_agent`, `list_agent_tasks` |
+| **Push** | `trigger_pipeline`, `restart_pipeline`, `cancel_pipeline`, `approve_pipeline`, `decline_pipeline`, `rerun_last_failed`, `get_pipeline_metadata`, all cron tools, all repository secret tools |
+| **Repository admin** | `repair_repository`, `deactivate_repository` |
+| **Forge/repository admin** | `activate_repository` |
+
+Use a token with only the permissions the assistant actually needs. For
+read-only use, set `MCP_READ_ONLY=true`.
+
 ## Examples
 
 Questions you can ask your AI assistant when this MCP server is connected:

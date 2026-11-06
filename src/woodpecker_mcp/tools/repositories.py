@@ -125,7 +125,7 @@ def register(mcp: MCPServer) -> None:
         """Repair a repository by re-syncing its webhook and configuration.
 
         Use this when the repository's webhook is broken or configuration is out of sync
-        with the forge (GitHub/GitLab).
+        with the forge (GitHub/GitLab). Requires repository admin rights.
 
         Args:
             repo_id: The internal Woodpecker repository ID.
@@ -163,7 +163,7 @@ def register(mcp: MCPServer) -> None:
         """Activate a repository for the currently authenticated user.
 
         Enables Woodpecker integration for a repository that exists at the forge
-        but is not yet active in Woodpecker.
+        but is not yet active in Woodpecker. Requires forge/repository admin rights.
 
         Args:
             forge_remote_id: The repository's unique identifier at the forge
@@ -185,7 +185,8 @@ def register(mcp: MCPServer) -> None:
         """Deactivate a repository, removing it from Woodpecker.
 
         Deletes the repository and its configuration from the Woodpecker server.
-        Use this when a repository should no longer be built.
+        Use this when a repository should no longer be built. Requires repository
+        admin rights.
 
         Args:
             repo_id: The internal Woodpecker repository ID.

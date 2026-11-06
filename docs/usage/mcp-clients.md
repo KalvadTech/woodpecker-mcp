@@ -11,12 +11,15 @@ Add a `.mcp.json` file to your project root:
       "type": "http",
       "url": "http://127.0.0.1:8080/mcp",
       "headers": {
-        "Authorization": "Bearer {env:WOODPECKER_TOKEN}"
+        "Authorization": "Bearer ${WOODPECKER_TOKEN}"
       }
     }
   }
 }
 ```
+
+Claude Code uses `${VAR}` expansion. The opencode example below uses its
+own `{env:VAR}` syntax.
 
 ## opencode
 
