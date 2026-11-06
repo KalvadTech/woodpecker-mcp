@@ -221,6 +221,23 @@ async def test_retry_on_429_with_retry_after(client: WoodpeckerClient, no_sleep)
 
 
 @pytest.mark.asyncio
+async def test_error_includes_upstream_errors(client: WoodpeckerClient):
+    async with respx.mock:
+        route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
+        route.side_effect = [
+            httpx.Response(
+                500,
+                json={"message": "pipeline store failed", "errors": ["db down"]},
+            )
+        ]
+        with pytest.raises(WoodpeckerError) as exc_info:
+            await client.get_json("/items", retry=False)
+        assert "pipeline store failed" in exc_info.value.message
+        assert "db down" in exc_info.value.message
+        assert route.call_count == 1
+
+
+@pytest.mark.asyncio
 async def test_no_retry_on_400_error(client: WoodpeckerClient):
     async with respx.mock:
         route = respx.get(f"{BASE_URL}{API_PREFIX}/items")
@@ -458,6 +475,18 @@ async def test_calculate_delay_with_retry_after(client: WoodpeckerClient):
 async def test_calculate_delay_with_invalid_retry_after(client: WoodpeckerClient):
     delay = client._calculate_delay(0, "invalid")
     assert 1.0 <= delay < 2.0
+
+
+@pytest.mark.asyncio
+async def test_calculate_delay_caps_retry_after(client: WoodpeckerClient):
+    delay = client._calculate_delay(0, "3600")
+    assert delay == 10.0
+
+
+@pytest.mark.asyncio
+async def test_calculate_delay_with_retry_after_http_date(client: WoodpeckerClient):
+    delay = client._calculate_delay(0, "Wed, 21 Oct 2099 07:28:00 GMT")
+    assert delay == 10.0
 
 
 @pytest.mark.asyncio

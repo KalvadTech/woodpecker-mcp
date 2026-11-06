@@ -1,3 +1,5 @@
+import httpx
+
 from woodpecker_mcp.errors import WoodpeckerError
 from woodpecker_mcp.tools._common import safe
 
@@ -12,6 +14,10 @@ async def _boom(message):
 
 async def _other():
     raise RuntimeError("boom")
+
+
+async def _network_boom():
+    raise httpx.ConnectError("connection refused")
 
 
 def _wrapped(fn):
@@ -43,3 +49,17 @@ async def test_safe_propagates_non_woodpecker_errors():
         assert isinstance(exc, RuntimeError)
     else:  # pragma: no cover
         raise AssertionError("expected RuntimeError")
+
+
+async def test_safe_converts_network_error_to_tool_error(bound_client):
+    from mcp.server.mcpserver.exceptions import ToolError
+
+    wrapped = _wrapped(_network_boom)
+    try:
+        await wrapped()
+    except ToolError as exc:
+        assert "could not reach" in str(exc)
+        assert "woodpecker.test" in str(exc)
+        assert "ConnectError" in str(exc)
+    else:  # pragma: no cover
+        raise AssertionError("expected ToolError")
