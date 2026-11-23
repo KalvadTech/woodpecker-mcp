@@ -34,7 +34,7 @@ dependencies = [
     "httpx==0.28.1",
     "starlette==1.10.0",
     "uvicorn[standard]==0.54.0",
-    "pyyaml==6.0.3",
+    "pyyaml==6.0.4",
     "pyjwt==2.15.1",
 ]
 
@@ -62,8 +62,8 @@ dev = [
     "pytest-asyncio==1.5.0",
     "pytest-cov==7.1.0",
     "respx==0.23.1",
-    "ruff==0.17.5",
-    "ty==0.0.104",
+    "ruff==0.17.6",
+    "ty==0.0.108",
 ]
 docs = [
     "mkdocs==1.6.1",
